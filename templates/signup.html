@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Jarvis AI | Sign Up</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --accent-tan: #f5e3b0;
+            --glass: rgba(255, 255, 255, 0.9);
+            --text-sub: #64748b;
+            --input-bg: #f1f5f9;
+            --input-focus-bg: #fff;
+            --label-color: #000;
+        }
+
+        /* ── Dark mode variables ── */
+        body.dark-mode {
+            --glass: rgba(30, 30, 30, 0.95);
+            --text-sub: #9ca3af;
+            --input-bg: #2a2a2a;
+            --input-focus-bg: #333;
+            --label-color: #f3f4f6;
+        }
+        body.dark-mode { background: radial-gradient(circle at top left, #2a2010 0%, #141414 40%, #0a0a0a 100%); }
+        body.dark-mode .login-card { border-color: rgba(255,255,255,0.08); box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        body.dark-mode .input-wrap { background: var(--input-bg); border-color: transparent; }
+        body.dark-mode .input-wrap:focus-within { background: var(--input-focus-bg); border-color: #f5e3b0; }
+        body.dark-mode .input-wrap input { color: #f3f4f6; }
+        body.dark-mode .eye-btn { color: #6b7280; }
+        body.dark-mode .eye-btn:hover { color: #f3f4f6; }
+        body.dark-mode .btn { background: #f5e3b0; color: #1a1a1a; }
+        body.dark-mode .btn:hover { background: #e8d49a; }
+        body.dark-mode .footer-links a { color: #f5e3b0; }
+        body.dark-mode h1 { color: #f3f4f6; }
+        body.dark-mode .input-group label { color: var(--label-color); }
+        body.dark-mode .credit span { color: #d1d5db; }
+        body.dark-mode .credit { color: #6b7280; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top left, #f5e3b0 0%, #e5e7eb 40%, #d1d5db 100%);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.3s;
+        }
+
+        .logo-container {
+            position: relative;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .aura {
+            position: absolute;
+            width: 110px; height: 110px;
+            background: var(--accent-tan);
+            border-radius: 50%;
+            filter: blur(35px);
+            opacity: 0.5;
+            animation: breathe 4s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50%       { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .logo {
+            width: 80px; height: 80px;
+            background: var(--accent-tan);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            position: relative; z-index: 1;
+        }
+
+        .login-card {
+            width: 100%; max-width: 380px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 35px 25px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 24px; letter-spacing: 2px; color: #000; margin-bottom: 5px; }
+        .sub { font-size: 14px; color: var(--text-sub); margin-bottom: 30px; }
+
+        .error {
+            background: #fee2e2; color: #ef4444;
+            padding: 10px; border-radius: 8px;
+            font-size: 13px; margin-bottom: 20px;
+        }
+
+        .input-group { margin-bottom: 18px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; color: #000; margin-bottom: 6px; margin-left: 4px; }
+
+        .input-wrap {
+            background: var(--input-bg, #f1f5f9);
+            border-radius: 12px;
+            border: 1.5px solid transparent;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        .input-wrap:focus-within { background: var(--input-focus-bg, #fff); border-color: #000; }
+
+        .input-wrap input {
+            flex: 1;
+            padding: 12px 15px;
+            background: none; border: none; outline: none;
+            font-size: 15px; color: #000;
+            -webkit-appearance: none;
+            appearance: none;
+            box-shadow: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Remove browser autofill highlight */
+        .input-wrap input:-webkit-autofill,
+        .input-wrap input:-webkit-autofill:hover,
+        .input-wrap input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px var(--input-bg, #f1f5f9) inset !important;
+            box-shadow: 0 0 0 1000px var(--input-bg, #f1f5f9) inset !important;
+            -webkit-text-fill-color: #000 !important;
+            transition: background-color 9999s ease-in-out 0s;
+        }
+        body.dark-mode .input-wrap input:-webkit-autofill,
+        body.dark-mode .input-wrap input:-webkit-autofill:hover,
+        body.dark-mode .input-wrap input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px #2a2a2a inset !important;
+            box-shadow: 0 0 0 1000px #2a2a2a inset !important;
+            -webkit-text-fill-color: #f3f4f6 !important;
+        }
+
+        .eye-btn {
+            background: none; border: none; cursor: pointer;
+            padding: 0 14px; color: #94a3b8;
+            display: flex; align-items: center;
+            transition: color .2s;
+        }
+        .eye-btn:hover { color: #000; }
+
+        .btn {
+            width: 100%; padding: 15px;
+            background: #000; color: #fff;
+            border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: 0.2s;
+            margin-top: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn:hover { background: #1e293b; }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer-links { margin-top: 20px; font-size: 14px; color: var(--text-sub); }
+        .footer-links a { color: #000; text-decoration: none; font-weight: 700; }
+
+        .credit {
+            margin-top: 30px; font-size: 10px;
+            color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase;
+        }
+        .credit span { color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo-container">
+            <div class="aura"></div>
+            <div class="logo">
+                <svg viewBox="0 0 100 100" width="55" height="55">
+                    <path d="M34,29 L48,29 L51,49 L37,49 Z" fill="black"/>
+                    <path d="M54,29 L63,29 Q74,29 74,39 Q74,49 63,49 L54,49 Z" fill="black"/>
+                    <circle cx="42" cy="62" r="11" fill="black"/>
+                    <polygon points="54,52 74,72 54,72" fill="black"/>
+                </svg>
+            </div>
+        </div>
+
+        <h1>JARVIS AI</h1>
+        <p class="sub">Create your account</p>
+
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+        <form method="POST" id="signupForm">
+            <div class="input-group">
+                <label>CHOOSE USERNAME</label>
+                <div class="input-wrap">
+                    <input type="text" name="username" placeholder="Username" required autocomplete="off">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>CREATE PASSWORD</label>
+                <div class="input-wrap">
+                    <input type="password" name="password" id="signupPwd" placeholder="Password" required>
+                    <button type="button" class="eye-btn" onclick="toggleEye('signupPwd', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="signupBtn">
+                <span id="signupBtnText">Sign Up</span>
+                <div class="spinner" id="signupSpinner"></div>
+            </button>
+        </form>
+
+        <div class="footer-links">
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </div>
+
+        <p class="credit">Created by <span>Aadin</span></p>
+    </div>
+
+    <script>
+        // ── Dark mode: sync from chat page preference ──
+        (function() {
+            if (localStorage.getItem('jarvis-dark')) {
+                document.body.classList.add('dark-mode');
+            }
+        })();
+
+        function toggleEye(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon  = btn.querySelector('svg');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+            } else {
+                input.type = 'password';
+                icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+            }
+        }
+
+        document.getElementById('signupForm').onsubmit = function() {
+            const btn     = document.getElementById('signupBtn');
+            const text    = document.getElementById('signupBtnText');
+            const spinner = document.getElementById('signupSpinner');
+            btn.disabled        = true;
+            text.textContent    = 'Creating account...';
+            spinner.style.display = 'block';
+        };
+    </script>
+</body>
+</html>
