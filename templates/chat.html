@@ -561,61 +561,150 @@
                     <p class="ver">Terms & Privacy
 Last updated: 2025 · Applies to all Jarvis AI beta users</p>
 
-                    <p>⚠️ You are using a beta version of Jarvis AI. Features may change, data may be reset, and things may occasionally break. Use at your own risk.</p>
+     div class="info-box tan">
+                <p>⚠️ <strong>You are using a beta version of Jarvis AI.</strong> Features may change, data may be reset, and things may occasionally break. Use at your own risk.</p>
+            </div>
 
-<h3>Section 01
-What We Collect</h3>
-<p>When you create an account and use Jarvis AI, the following data is stored:</p>
+            <hr class="divider">
 
-Username
-— the name you choose at signup. No real name, email, or phone number is collected.
-Password
-— stored as a secure hash (we never store your actual password).
-Chat history
-— every message you send and every reply from Jarvis is saved, organised into sessions.
-Visit logs
-— anonymous timestamps recorded each time the app is loaded (no IP address or device info).
-Section 02
-Admin Access to Your Chats
-Jarvis AI is built and operated by Aadin. As the admin, Aadin can view all chat logs stored in the database through an admin panel.
+            <!-- Section 01 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 01
+                </div>
+                <h2 class="sec-title">What We Collect</h2>
+                <p>When you create an account and use Jarvis AI, the following data is stored:</p>
+                <ul class="data-list">
+                    <li><strong>Username</strong> — the name you choose at signup. No real name, email, or phone number is collected.</li>
+                    <li><strong>Password</strong> — stored as a secure hash (we never store your actual password).</li>
+                    <li><strong>Chat history</strong> — every message you send and every reply from Jarvis is saved, organised into sessions.</li>
+                    <li><strong>Visit logs</strong> — anonymous timestamps recorded each time the app is loaded (no IP address or device info).</li>
+                </ul>
+            </div>
 
-🔍 Your conversations are not private from the admin. Do not share sensitive personal information, passwords, or anything you would not want the developer to see.
+            <hr class="divider">
 
-Chat logs are reviewed only for security purposes such as detecting abuse, bad words, or attempted security breaches and are not shared with any third party. They may also be used to improve the working efficiency of Jarvis and to detect bugs.
+            <!-- Section 02 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#ef4444"></span>
+                    Section 02
+                </div>
+                <h2 class="sec-title">Admin Access to Your Chats</h2>
+                <p>Jarvis AI is built and operated by <strong>Aadin</strong>. As the admin, Aadin can view all chat logs stored in the database through an admin panel.</p>
+                <div class="info-box red">
+                    <p>🔍 <strong>Your conversations are not private from the admin.</strong> Do not share sensitive personal information, passwords, or anything you would not want the developer to see.</p>
+                </div>
+                <p>Chat logs are reviewed only for security purposes such as detecting abuse, bad words, or attempted security breaches and are not shared with any third party. They may also be used to improve the working efficiency of Jarvis and to detect bugs.</p>
+            </div>
 
-Section 03
-Third-Party Services
-Jarvis AI uses the following external services. By using the app, you acknowledge that your data passes through these platforms:
+            <hr class="divider">
 
-Groq (AI)
-Your messages are sent to Groq's API to generate AI replies. Groq's own privacy policy applies.
-Vercel Analytics
-Anonymous visit tracking to understand how many people use the app.
-Discord Webhooks
-Security alerts (e.g. abusive language or breach attempts) are sent to a private Discord channel with your username and the flagged message.
-Neon PostgreSQL
-All user data (accounts, chats, sessions) is stored in a cloud PostgreSQL database hosted by Neon.
-Section 04
-Acceptable Use
-By using Jarvis AI you agree not to:
+            <!-- Section 03 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#10b981"></span>
+                    Section 03
+                </div>
+                <h2 class="sec-title">Third-Party Services</h2>
+                <p>Jarvis AI uses the following external services. By using the app, you acknowledge that your data passes through these platforms:</p>
 
-Use the app for any illegal, harmful, or abusive purpose.
-Attempt to extract API keys, passwords, or system information from Jarvis.
-Impersonate the developer or attempt to gain unauthorized admin access.
-Use abusive, hateful, or threatening language.
-Violations may result in your account being deleted without notice. In the case of any serious problems, legal action could be taken.
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#000">
+                        <i class="fa-solid fa-bolt" style="color:#f5e3b0;font-size:16px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Groq (AI)</div>
+                        <div class="tp-desc">Your messages are sent to Groq's API to generate AI replies. Groq's own privacy policy applies.</div>
+                    </div>
+                </div>
 
-Section 05
-AI Disclaimer
-"JARVIS is an AI Assistant". Responses may be inaccurate, incomplete, or outdated. Do not rely on Jarvis for medical, legal, financial, or safety-critical decisions.
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#000">
+                        <i class="fa-solid fa-arrow-up" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Vercel Analytics</div>
+                        <div class="tp-desc">Anonymous visit tracking to understand how many people use the app.</div>
+                    </div>
+                </div>
 
-Jarvis AI is a personal project in beta. It is provided with no guarantees of uptime, accuracy, or data retention.
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#5865F2">
+                        <i class="fa-brands fa-discord" style="color:#fff;font-size:18px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Discord Webhooks</div>
+                        <div class="tp-desc">Security alerts (e.g. abusive language or breach attempts) are sent to a private Discord channel with your username and the flagged message.</div>
+                    </div>
+                </div>
 
-Section 06
-Deleting Your Data
-You can delete individual chat sessions directly from the Jarvis chat interface at any time. To request full account deletion, contact the developer.
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#00e699">
+                        <i class="fa-solid fa-database" style="color:#000;font-size:15px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Neon PostgreSQL</div>
+                        <div class="tp-desc">All user data (accounts, chats, sessions) is stored in a cloud PostgreSQL database hosted by Neon.</div>
+                    </div>
+                </div>
 
-Since no email is collected, reach out through whatever channel you used to get access to the beta, or via email at hey.itsaadin@gmail.com.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 04 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 04
+                </div>
+                <h2 class="sec-title">Acceptable Use</h2>
+                <p>By using Jarvis AI you agree not to:</p>
+                <ul class="data-list">
+                    <li>Use the app for any illegal, harmful, or abusive purpose.</li>
+                    <li>Attempt to extract API keys, passwords, or system information from Jarvis.</li>
+                    <li>Impersonate the developer or attempt to gain unauthorized admin access.</li>
+                    <li>Use abusive, hateful, or threatening language.</li>
+                </ul>
+                <p>Violations may result in your account being deleted without notice. In the case of any serious problems, legal action could be taken.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 05 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#10b981"></span>
+                    Section 05
+                </div>
+                <h2 class="sec-title">AI Disclaimer</h2>
+                <div class="info-box green">
+                    <p><strong>"JARVIS is an AI Assistant".</strong> Responses may be inaccurate, incomplete, or outdated. Do not rely on Jarvis for medical, legal, financial, or safety-critical decisions.</p>
+                </div>
+                <p>Jarvis AI is a personal project in beta. It is provided with no guarantees of uptime, accuracy, or data retention.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 06 -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 06
+                </div>
+                <h2 class="sec-title">Deleting Your Data</h2>
+                <p>You can delete individual chat sessions directly from the Jarvis chat interface at any time. To request full account deletion, contact the developer.</p>
+                <p>Since no email is collected, reach out through whatever channel you used to get access to the beta, or via email at <strong>hey.itsaadin@gmail.com</strong>.</p>
+            </div>
+
+        </div>
+
+        <div class="card-footer">
+            <div class="footer-text">
+                Made with 🤍 by <span>Aadin</span> · Jarvis AI (Beta)
+            </div>               
                     
                 </div>
             </div>
