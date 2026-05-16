@@ -516,7 +516,7 @@
             <div class="input-group">
                 <label><span class="label-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Choose Username</label>
                 <div class="input-wrap{% if username_taken %} username-error{% endif %}">
-                    <input type="text" name="username" placeholder="e.g. aadin123" required autocomplete="off"
+                    <input type="text" name="username" placeholder="" required autocomplete="off"
                            value="{{ request.form.get('username', '') }}">
                 </div>
                 {% if username_taken %}<p class="username-error-msg">⚠ Username already exists</p>{% endif %}
