@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Jarvis AI | Beta Terms & Privacy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --accent-tan: #f5e3b0;
+            --glass: rgba(255,255,255,0.92);
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --light: #e5e7eb;
+            --bg: #f3f4f6;
+            --dark: #111827;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Nunito','Segoe UI',system-ui,sans-serif;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, #f5e3b0 0%, #e5e7eb 40%, #d1d5db 100%);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px 60px;
+            transition: background 0.3s;
+        }
+
+        body.dark-mode {
+            background: radial-gradient(circle at top left, #2a2010 0%, #141414 40%, #0a0a0a 100%);
+            --glass: rgba(28,28,28,0.97);
+            --text-main: #f3f4f6;
+            --text-sub: #9ca3af;
+            --light: #2e2e2e;
+            --bg: #1a1a1a;
+            --dark: #f3f4f6;
+        }
+
+        /* ── Nav — same as original ── */
+        .nav {
+            width: 100%; max-width: 720px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px;
+            background: #000;
+            border-radius: 18px;
+            padding: 10px 12px 10px 10px;
+            border: 1px solid rgba(245,227,176,0.15);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+            position: relative; overflow: hidden;
+            animation: slideUp .35s ease-out;
+        }
+        .nav::before {
+            content: '';
+            position: absolute; top: -30px; left: -20px;
+            width: 120px; height: 90px;
+            background: var(--accent-tan);
+            border-radius: 50%; filter: blur(38px);
+            opacity: 0.18; pointer-events: none;
+        }
+        body.dark-mode .nav { background: #111; border-color: rgba(245,227,176,0.12); }
+
+        .nav-left {
+            display: flex; align-items: center; gap: 11px;
+            text-decoration: none; position: relative; z-index: 1;
+        }
+        .nav-logo {
+            width: 40px; height: 40px;
+            background: var(--accent-tan);
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 3px rgba(245,227,176,0.2), 0 3px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .nav-title { font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 2px; }
+        .nav-subtitle { font-size: 9.5px; font-weight: 700; color: rgba(245,227,176,0.55); letter-spacing: 1.5px; margin-top: 1px; }
+
+        .nav-back {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 12px; font-weight: 800; color: #111;
+            text-decoration: none; padding: 8px 16px;
+            background: var(--accent-tan);
+            border: none; border-radius: 12px;
+            transition: all .2s; letter-spacing: .3px;
+            position: relative; z-index: 1; flex-shrink: 0;
+            cursor: pointer;
+        }
+        .nav-back:hover { background: #f0d48a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,227,176,0.3); }
+        .nav-back:active { transform: translateY(0); }
+        body.dark-mode .nav-back { color: #111; background: var(--accent-tan); }
+        body.dark-mode .nav-back:hover { background: #f0d48a; }
+
+        /* ── Card ── */
+        .card {
+            width: 100%; max-width: 720px;
+            background: var(--glass);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+            animation: slideUp .45s ease-out;
+        }
+        body.dark-mode .card { border-color: rgba(255,255,255,0.07); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+        @keyframes slideUp {
+            from { opacity:0; transform:translateY(18px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .card-header {
+            background: #000; padding: 36px 36px 32px;
+            position: relative; overflow: hidden;
+        }
+        body.dark-mode .card-header { background: #0d0d0d; }
+        .header-orb {
+            position: absolute; top: -60px; right: -60px;
+            width: 220px; height: 220px;
+            background: var(--accent-tan);
+            border-radius: 50%; filter: blur(70px);
+            opacity: 0.15; pointer-events: none;
+        }
+        .header-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(245,227,176,0.15); border: 1px solid rgba(245,227,176,0.3);
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 10px; font-weight: 800; color: var(--accent-tan); letter-spacing: 1.5px;
+            margin-bottom: 16px;
+        }
+        .header-badge span {
+            width: 6px; height: 6px; background: var(--accent-tan);
+            border-radius: 50%; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(245,227,176,.6);} 70%{box-shadow:0 0 0 5px rgba(245,227,176,0);} 100%{box-shadow:0 0 0 0 rgba(245,227,176,0);} }
+        .header-title { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 2px; margin-bottom: 8px; }
+        .header-sub { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.6; }
+
+        .card-body { padding: 32px 36px; }
+        .section { margin-bottom: 32px; }
+        .section:last-child { margin-bottom: 0; }
+
+        .sec-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 10px; font-weight: 800; color: var(--text-sub);
+            letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;
+        }
+        .sec-label-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .sec-title { font-size: 17px; font-weight: 800; color: var(--dark); margin-bottom: 10px; letter-spacing: .3px; }
+
+        p { font-size: 14px; color: var(--text-sub); line-height: 1.75; margin-bottom: 10px; }
+        p:last-child { margin-bottom: 0; }
+
+        /* ── Info boxes — same as original ── */
+        .info-box { border-radius: 14px; padding: 16px 18px; margin: 14px 0; border: 1px solid; }
+        .info-box.tan { background: rgba(245,227,176,0.18); border-color: rgba(245,227,176,0.4); }
+        body.dark-mode .info-box.tan { background: rgba(245,227,176,0.08); border-color: rgba(245,227,176,0.2); }
+        .info-box.green { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.25); }
+        .info-box.red { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); }
+        .info-box.blue { background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.2); }
+        .info-box p { margin: 0; font-size: 13.5px; }
+        .info-box.tan p { color: #92600a; }
+        body.dark-mode .info-box.tan p { color: #d4a847; }
+        .info-box.green p { color: #065f46; }
+        body.dark-mode .info-box.green p { color: #6ee7b7; }
+        .info-box.red p { color: #991b1b; }
+        body.dark-mode .info-box.red p { color: #fca5a5; }
+        .info-box.blue p { color: #1e40af; }
+        body.dark-mode .info-box.blue p { color: #93c5fd; }
+
+        /* ── Data list — same li-label/li-desc as original ── */
+        .data-list {
+            list-style: none; margin: 14px 0;
+            display: flex; flex-direction: column; gap: 0;
+        }
+        .data-list li {
+            display: grid; grid-template-columns: 1fr;
+            gap: 2px; font-size: 13.5px; color: var(--text-sub);
+            line-height: 1.65; padding: 10px 0;
+            border-bottom: 1px solid var(--light);
+            position: relative; padding-left: 16px;
+        }
+        .data-list li:last-child { border-bottom: none; }
+        .data-list li::before {
+            content: '';
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent-tan); flex-shrink: 0;
+            position: absolute; left: 0; top: 16px;
+        }
+        .data-list li .li-label { font-size: 12px; font-weight: 800; color: var(--dark); letter-spacing: .2px; }
+        .data-list li .li-desc { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+
+        .divider { border: none; border-top: 1px solid var(--light); margin: 28px 0; }
+
+        /* ── Third party rows — same as original ── */
+        .third-party-row {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--bg); border: 1px solid var(--light);
+            border-radius: 12px; padding: 13px 15px; margin-bottom: 8px;
+        }
+        .tp-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            background: var(--accent-tan);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .tp-info { flex: 1; min-width: 0; }
+        .tp-name { font-size: 13px; font-weight: 800; color: var(--dark); }
+        .tp-desc { font-size: 11.5px; color: var(--text-sub); margin-top: 2px; line-height: 1.5; }
+
+        /* ── Feature rows (same style as third-party rows) ── */
+        .feature-row {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--bg); border: 1px solid var(--light);
+            border-radius: 12px; padding: 13px 15px; margin-bottom: 8px;
+        }
+        .feature-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .feature-info { flex: 1; min-width: 0; }
+        .feature-name { font-size: 13px; font-weight: 800; color: var(--dark); }
+        .feature-desc { font-size: 11.5px; color: var(--text-sub); margin-top: 2px; line-height: 1.5; }
+
+        /* ── Footer ── */
+        .card-footer {
+            background: var(--bg); border-top: 1px solid var(--light);
+            padding: 20px 36px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .footer-text { font-size: 11px; color: var(--text-sub); }
+        .footer-text span { color: var(--dark); font-weight: 800; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #000; color: #fff; text-decoration: none;
+            font-size: 13px; font-weight: 700; padding: 10px 20px;
+            border-radius: 10px; transition: background .2s;
+        }
+        .back-btn:hover { background: #1e293b; }
+        body.dark-mode .back-btn { background: var(--accent-tan); color: #1a1a1a; }
+        body.dark-mode .back-btn:hover { background: #e8d49a; }
+
+        @media (max-width: 500px) {
+            .card-header { padding: 28px 22px 24px; }
+            .card-body   { padding: 24px 22px; }
+            .card-footer { padding: 18px 22px; }
+            .header-title { font-size: 21px; }
+        }
+
+        /* ── Desktop ── */
+        @media (min-width: 720px) {
+            body { padding: 40px 24px 80px; }
+            .nav { max-width: 860px; margin-bottom: 32px; padding: 12px 14px 12px 12px; border-radius: 20px; }
+            .nav-title { font-size: 15px; }
+            .nav-back { padding: 10px 20px; font-size: 13px; border-radius: 13px; }
+            .card { max-width: 860px; border-radius: 28px; }
+            .card-header { padding: 52px 56px 44px; }
+            .header-title { font-size: 34px; letter-spacing: 3px; }
+            .header-sub { font-size: 14px; }
+            .card-body { padding: 48px 56px; }
+            .data-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+            .data-list li { border-bottom: 1px solid var(--light); border-right: none; }
+            .data-list li:nth-child(odd) { border-right: 1px solid var(--light); padding-right: 20px; }
+            .data-list li:nth-child(even) { padding-left: 28px; }
+            .data-list li:nth-last-child(-n+2):nth-child(odd),
+            .data-list li:nth-last-child(-n+2):nth-child(even) { border-bottom: none; }
+            .third-party-row { padding: 16px 18px; }
+            .feature-row { padding: 16px 18px; }
+            .tp-name { font-size: 14px; }
+            .tp-desc { font-size: 12.5px; }
+            .feature-name { font-size: 14px; }
+            .feature-desc { font-size: 12.5px; }
+            .info-box { padding: 18px 22px; }
+            .info-box p { font-size: 14px; }
+            .sec-title { font-size: 20px; }
+            p { font-size: 15px; }
+            .card-footer { padding: 24px 56px; }
+            .footer-text { font-size: 13px; }
+        }
+
+        @media (min-width: 1024px) {
+            .card { max-width: 960px; }
+            .nav  { max-width: 960px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav">
+        <a href="/" class="nav-left">
+            <div class="nav-logo">
+                <svg viewBox="0 0 100 100" width="22" height="22">
+                    <path d="M34,29 L48,29 L51,49 L37,49 Z" fill="#1f2937"/>
+                    <path d="M54,29 L63,29 Q74,29 74,39 Q74,49 63,49 L54,49 Z" fill="#1f2937"/>
+                    <circle cx="42" cy="62" r="11" fill="#1f2937"/>
+                    <polygon points="54,52 74,72 54,72" fill="#1f2937"/>
+                </svg>
+            </div>
+            <div>
+                <div class="nav-title">JARVIS AI</div>
+                <div class="nav-subtitle">TERMS &amp; PRIVACY</div>
+            </div>
+        </a>
+        <a href="/chat" onclick="window.close()" class="nav-back">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Chat
+        </a>
+    </nav>
+
+    <div class="card">
+
+        <div class="card-header">
+            <div class="header-orb"></div>
+            <div class="header-badge"><span></span> BETA PROGRAM</div>
+            <h1 class="header-title">Terms & Privacy</h1>
+            <p class="header-sub">Last updated: 17/5/2026 · Applies to all Jarvis AI beta users</p>
+        </div>
+
+        <div class="card-body">
+
+            <div class="info-box tan">
+                <p><strong>You are using a beta version of Jarvis AI.</strong> Features may change, data may be reset, and things may occasionally break. Use at your own risk.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 01 — What We Collect -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 01
+                </div>
+                <h2 class="sec-title">What We Collect</h2>
+                <p>When you create an account and use Jarvis AI, the following data is stored:</p>
+                <ul class="data-list">
+                    <li><span class="li-label">Username</span><span class="li-desc">The name you choose at signup. No real name, email, or phone number is collected.</span></li>
+                    <li><span class="li-label">Password</span><span class="li-desc">Stored as a secure hash — we never store your actual password.</span></li>
+                    <li><span class="li-label">Chat history</span><span class="li-desc">Every message you send and every reply from Jarvis is saved, organised into sessions.</span></li>
+                    <li><span class="li-label">Calculation history</span><span class="li-desc">Math expressions you calculate are saved and can be reviewed from the chat interface.</span></li>
+                    <li><span class="li-label">Visit logs</span><span class="li-desc">Anonymous timestamps recorded each time the app is loaded. No IP address or device info is stored.</span></li>
+                    <li><span class="li-label">Session activity</span><span class="li-desc">Your last active time (heartbeat) is periodically recorded to track active users in the admin panel.</span></li>
+                    <li><span class="li-label">PDF content (temporary)</span><span class="li-desc">When using the Quiz or Exam features, your uploaded PDF text is extracted and sent to Groq's API. It is not stored permanently on our servers.</span></li>
+                    <li><span class="li-label">Image prompts</span><span class="li-desc">When you generate an image, the text prompt is saved in your chat history like any other message.</span></li>
+                </ul>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 02 — Features -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#6366f1"></span>
+                    Section 02
+                </div>
+                <h2 class="sec-title">Features & How They Work</h2>
+                <p>Jarvis AI includes the following features. Here's what each one does with your data:</p>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#000">
+                        <i class="fa-solid fa-robot" style="color:#f5e3b0;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">AI Chat</div>
+                        <div class="feature-desc">Your messages are sent to Groq's API (LLaMA model) to generate replies. Chat history is saved to the database and visible to the admin.</div>
+                    </div>
+                </div>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#6366f1">
+                        <i class="fa-solid fa-image" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">AI Image Generation</div>
+                        <div class="feature-desc">Your prompt is sent to Pollinations.ai to generate an image. The prompt is stored in chat history. The image itself is not stored on our servers — only the URL.</div>
+                    </div>
+                </div>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#0ea5e9">
+                        <i class="fa-solid fa-file-pdf" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">Quiz Generator</div>
+                        <div class="feature-desc">You upload a PDF — its text is extracted and sent to Groq's API to generate multiple-choice questions. The PDF is not stored permanently on our servers.</div>
+                    </div>
+                </div>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#f59e0b">
+                        <i class="fa-solid fa-scroll" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">Model Exam Generator</div>
+                        <div class="feature-desc">Similar to the Quiz Generator — your PDF text is sent to Groq to produce a structured exam paper with questions, options, answers, and explanations.</div>
+                    </div>
+                </div>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#10b981">
+                        <i class="fa-solid fa-calculator" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">Calculator</div>
+                        <div class="feature-desc">Math expressions are evaluated securely and saved to your calculation history in the database.</div>
+                    </div>
+                </div>
+
+                <div class="feature-row">
+                    <div class="feature-icon" style="background:#374151">
+                        <i class="fa-solid fa-clock" style="color:#f5e3b0;font-size:15px"></i>
+                    </div>
+                    <div class="feature-info">
+                        <div class="feature-name">Time & Date</div>
+                        <div class="feature-desc">Current time and date are read from the server (IST timezone) and returned to you. Nothing additional is stored.</div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 03 — Admin Access -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#ef4444"></span>
+                    Section 03
+                </div>
+                <h2 class="sec-title">Admin Access to Your Data</h2>
+                <p>Jarvis AI is built and operated by <strong>Aadin</strong>. As the admin, Aadin can view all chat logs, usernames, visit counts, and message counts through a password-protected admin panel.</p>
+                <div class="info-box red">
+                    <p><strong>Your conversations are not private from the admin.</strong> Do not share sensitive personal information, passwords, or anything you would not want the developer to see.</p>
+                </div>
+                <p>Chat logs are reviewed only for security purposes such as detecting abuse, bad words, or attempted security breaches and are not shared with any third party. They may also be used to improve the working efficiency of Jarvis and to detect bugs.</p>
+                <div class="info-box blue">
+                    <p><strong>Security alerts:</strong> If you use abusive language or attempt to extract system secrets, an automated alert including your username and the flagged message is sent to a private Discord channel.</p>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 04 — Sessions -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 04
+                </div>
+                <h2 class="sec-title">Sessions & Login Persistence</h2>
+                <p>When you log in, your session is remembered for <strong>30 days</strong>. You will stay logged in across browser restarts without needing to sign in again, until you manually log out or the session expires.</p>
+                <p>Your last active time (heartbeat) is periodically recorded while you use the app. This helps track active user counts in the admin panel.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 05 — Third-Party Services -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#10b981"></span>
+                    Section 05
+                </div>
+                <h2 class="sec-title">Third-Party Services</h2>
+                <p>Jarvis AI uses the following external services. By using the app, you acknowledge that your data passes through these platforms:</p>
+
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#000">
+                        <i class="fa-solid fa-bolt" style="color:#f5e3b0;font-size:16px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Groq (AI — Chat, Quiz & Exam)</div>
+                        <div class="tp-desc">Your chat messages and PDF text content are sent to Groq's API to generate AI replies, quiz questions, and exam papers. Groq's own privacy policy applies.</div>
+                    </div>
+                </div>
+
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#6366f1">
+                        <i class="fa-solid fa-image" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Pollinations.ai (Image Generation)</div>
+                        <div class="tp-desc">Your image prompts are sent to Pollinations.ai to generate images. No account or API key is required. Their service is free and open. Their own terms apply.</div>
+                    </div>
+                </div>
+
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#000">
+                        <i class="fa-solid fa-arrow-up" style="color:#fff;font-size:15px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Vercel Analytics</div>
+                        <div class="tp-desc">Anonymous visit tracking to understand how many people use the app.</div>
+                    </div>
+                </div>
+
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#5865F2">
+                        <i class="fa-brands fa-discord" style="color:#fff;font-size:18px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Discord Webhooks</div>
+                        <div class="tp-desc">Security alerts (abusive language, breach attempts) are sent to a private Discord channel with your username and the flagged message.</div>
+                    </div>
+                </div>
+
+                <div class="third-party-row">
+                    <div class="tp-icon" style="background:#00e699">
+                        <i class="fa-solid fa-database" style="color:#000;font-size:15px"></i>
+                    </div>
+                    <div class="tp-info">
+                        <div class="tp-name">Neon PostgreSQL</div>
+                        <div class="tp-desc">All user data (accounts, chats, sessions, calculation history) is stored in a cloud PostgreSQL database hosted by Neon.</div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 06 — Acceptable Use -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 06
+                </div>
+                <h2 class="sec-title">Acceptable Use</h2>
+                <p>By using Jarvis AI you agree not to:</p>
+                <ul class="data-list">
+                    <li><span class="li-label">No illegal or harmful use</span><span class="li-desc">Do not use the app for any illegal, harmful, or abusive purpose.</span></li>
+                    <li><span class="li-label">No extraction attempts</span><span class="li-desc">Do not attempt to extract API keys, passwords, or system information from Jarvis.</span></li>
+                    <li><span class="li-label">No impersonation</span><span class="li-desc">Do not impersonate the developer or attempt to gain unauthorized admin access.</span></li>
+                    <li><span class="li-label">No abusive language</span><span class="li-desc">Do not use abusive, hateful, or threatening language.</span></li>
+                    <li><span class="li-label">No harmful PDF content</span><span class="li-desc">Do not upload PDFs containing illegal, harmful, or copyrighted content with intent to misuse.</span></li>
+                    <li><span class="li-label">No harmful image prompts</span><span class="li-desc">Do not generate images of harmful, explicit, or illegal content through the image generation feature.</span></li>
+                </ul>
+                <p>Violations may result in your account being deleted without notice. In the case of any serious problems, legal action could be taken.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 07 — AI Disclaimer -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#10b981"></span>
+                    Section 07
+                </div>
+                <h2 class="sec-title">AI Disclaimer</h2>
+                <div class="info-box green">
+                    <p><strong>"JARVIS is an AI Assistant."</strong> Responses, quiz questions, exam papers, and generated images may be inaccurate, incomplete, or inappropriate. Do not rely on Jarvis for medical, legal, financial, or safety-critical decisions.</p>
+                </div>
+                <p>Quiz and exam questions generated from your PDFs are AI-produced and may contain errors. Always verify against your original study material.</p>
+                <p>Jarvis AI is a personal project in beta. It is provided with no guarantees of uptime, accuracy, or data retention.</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 08 — Image Generation Terms -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#6366f1"></span>
+                    Section 08
+                </div>
+                <h2 class="sec-title">Image Generation</h2>
+                <p>Jarvis AI provides access to an AI image generation tool powered by Pollinations.ai. By using this feature, you agree to the terms outlined below.</p>
+
+                <div class="info-box tan">
+                    <p><strong>Using the image tool means you agree to Pollinations.ai's terms.</strong> When you generate an image, your prompt is sent to their service. Their Terms of Service and content policies apply to every image generated through Jarvis AI. You are responsible for ensuring your prompts comply with their rules.</p>
+                </div>
+
+                <ul class="data-list">
+                    <li><span class="li-label">Prompts are logged</span><span class="li-desc">Image prompts are stored in your chat history and visible to the admin, the same as any other message.</span></li>
+                    <li><span class="li-label">Images not stored on our servers</span><span class="li-desc">Only the URL returned by the provider is used. The actual image file lives on their infrastructure and may expire.</span></li>
+                    <li><span class="li-label">Download to keep</span><span class="li-desc">Image URLs may stop working after a period of time. Use the Download button to save any image you want to keep.</span></li>
+                    <li><span class="li-label">Provider enforces its own policies</span><span class="li-desc">We do not pre-filter your prompts. The image generation API enforces its own content policies and may refuse or flag certain requests independently.</span></li>
+                </ul>
+
+                <div class="info-box red">
+                    <p><strong>No ownership or copyright claim.</strong> Jarvis AI does not own, claim copyright over, or take any responsibility for images generated using this tool. The image is produced by a third-party AI model — we are only the interface through which you accessed it.</p>
+                </div>
+
+                <div class="info-box red">
+                    <p><strong>No legal liability.</strong> If any image you generate results in a copyright dispute, legal claim, terms-of-service violation, or any other legal issue — that is entirely between you and the image provider. Jarvis AI and its developer (Aadin) bear no responsibility whatsoever for images you create using this tool.</p>
+                </div>
+
+                <div class="info-box green">
+                    <p>By generating an image through Jarvis AI, you confirm that you understand and accept these terms, including Pollinations.ai's own Terms of Service.</p>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 09 — Deleting Your Data -->
+            <div class="section">
+                <div class="sec-label">
+                    <span class="sec-label-dot" style="background:#f5e3b0"></span>
+                    Section 09
+                </div>
+                <h2 class="sec-title">Deleting Your Data</h2>
+                <p>You can delete individual chat sessions directly from the Jarvis chat interface at any time. To request full account deletion, contact the developer.</p>
+                <p>Since no email is collected, reach out through whatever channel you used to get access to the beta, or via email at <strong>hey.itsaadin@gmail.com</strong>.</p>
+            </div>
+
+        </div>
+
+        <div class="card-footer">
+            <div class="footer-text">
+                Made with &#x2764;&#xFE0F; by <span>Aadin</span> · Jarvis AI (Beta)
+            </div>
+            <a href="/chat" onclick="window.close()" class="back-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back to Jarvis
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            if (localStorage.getItem('jarvis-dark')) {
+                document.body.classList.add('dark-mode');
+            }
+        })();
+    </script>
+
+</body>
+</html>
