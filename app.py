@@ -1147,7 +1147,7 @@ def send_image():
 
     try:
         genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
         img_bytes = image_file.read()
         img = PIL.Image.open(io.BytesIO(img_bytes))
@@ -1155,8 +1155,8 @@ def send_image():
 
         prompt = caption if caption else "Describe this image in detail."
         response = model.generate_content(
-            contents=[prompt, img],
-            generation_config={"max_output_tokens": 1024}
+    contents=[prompt, img],
+    generation_config={"max_output_tokens": 300}
         )
 
         reply = response.text.strip()
