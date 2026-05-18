@@ -1129,7 +1129,7 @@ Rules: Array only. No markdown. Do NOT repeat: {prev}"""
 
 
 
-# Then change allreturns in send_image to:
+# Then change all returns in send_image to:
 @app.route("/send_image", methods=["POST"])
 def send_image():
     if "user" not in session:
