@@ -1149,7 +1149,7 @@ def send_image():
         mime = image_file.content_type or "image/jpeg"
 
         prompt = caption if caption else "Describe this image in detail."
-        key = os.environ.get("GROQ_API_KEY2", "")
+        key = os.environ.get("GROQ_API_KEY_2", "")
 
         res = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
