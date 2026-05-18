@@ -3,6 +3,7 @@ import os
 import secrets
 import requests
 import re
+import time
 from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
@@ -1016,9 +1017,10 @@ Rules: JSON array only. No markdown. Vary question types. Plausible options. Bas
             batch = _parse_groq_json(raw)
             if isinstance(batch, list):
                 all_questions.extend(batch)
+                time.sleep(2)
         except Exception as e:
             if not all_questions:
-                return _json.dumps({"error": f"Quiz generation failed: {str(e)}"}), 500, {"Content-Type": "application/json"}
+                return _json.dumps({"error": f"Quiz generation failed: {str(e)}"})
             break
         remaining -= b
 
