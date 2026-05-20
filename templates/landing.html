@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Jarvis AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-bright: rgba(255,255,255,0.18);
+      --text: #f0ede8;
+      --text-dim: rgba(240,237,232,0.4);
+      --text-mid: rgba(240,237,232,0.65);
+      --tan: #f5e3b0;
+      --tan-dim: rgba(245,227,176,0.1);
+      --red: #ef4444;
+      --green: #10b981;
+      --code-bg: #1e1e2e;
+      --code-fg: #cdd6f4;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body { width:100%; height:100dvh; background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow:hidden; position:relative; }
+
+    /* ── Grain ── */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      opacity:0.55;
+    }
+    /* ── Vignette ── */
+    body::after {
+      content:''; position:fixed; inset:0; z-index:2; pointer-events:none;
+      background:radial-gradient(ellipse at 50% 55%, transparent 20%, rgba(8,8,8,0.75) 100%);
+    }
+
+    /* ══════════════════════════════════
+       AURORA
+    ══════════════════════════════════ */
+    #aurora-wrap {
+      position:fixed; inset:0; z-index:0;
+      transition: transform 0.85s cubic-bezier(0.16,1,0.3,1),
+                  opacity 0.85s cubic-bezier(0.16,1,0.3,1);
+    }
+    #aurora-wrap canvas { width:100%!important; height:100%!important; display:block; }
+
+    /* ══════════════════════════════════
+       SHELL
+    ══════════════════════════════════ */
+    .shell {
+      position:relative; z-index:10;
+      width:100%; height:100dvh;
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center;
+    }
+
+    /* ══════════════════════════════════
+       HAMBURGER — top right
+    ══════════════════════════════════ */
+    .ham-wrap {
+      position:fixed; top:20px; right:20px; z-index:200;
+      opacity:0; animation:fadeIn 0.5s 1s ease forwards;
+    }
+    .ham-btn {
+      width:40px; height:40px; border-radius:12px;
+      background:rgba(10,10,10,0.7); border:1px solid var(--border);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:5px; cursor:pointer; position:relative; overflow:hidden;
+      transition:border-color 0.2s, background 0.2s;
+    }
+    .ham-btn:hover { border-color:var(--border-bright); }
+    .ham-btn span {
+      display:block; width:18px; height:2px; border-radius:2px;
+      background:var(--text); pointer-events:none;
+      transition:transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s, width 0.2s;
+    }
+    .ham-btn.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .ham-btn.open span:nth-child(2) { opacity:0; width:0; }
+    .ham-btn.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    .ham-ripple {
+      position:absolute; border-radius:50%;
+      background:rgba(255,255,255,0.1); pointer-events:none;
+      transform:scale(0); animation:ripple 0.5s ease-out forwards;
+    }
+    @keyframes ripple { to { transform:scale(4); opacity:0; } }
+
+    /* ══════════════════════════════════
+       SETTINGS PANEL — Full-page overlay
+    ══════════════════════════════════ */
+    .settings-backdrop { display:none; } /* not used in full-page mode */
+
+    .settings-panel {
+      position:fixed; inset:0;
+      z-index:160;
+      display:flex; flex-direction:column;
+      background:var(--bg);
+      opacity:0; pointer-events:none;
+      transform:translateY(16px);
+      transition:opacity 0.28s cubic-bezier(0.22,1,0.36,1),
+                  transform 0.28s cubic-bezier(0.22,1,0.36,1);
+    }
+    .settings-panel.open {
+      opacity:1; pointer-events:all;
+      transform:translateY(0);
+    }
+
+    /* Scrollable body */
+    .sp-body {
+      flex:1; overflow-y:auto; padding:0 0 40px;
+      max-width:540px; width:100%; margin:0 auto;
+    }
+    .sp-body::-webkit-scrollbar { display:none; }
+
+    /* Top bar with close X */
+    .sp-back-row {
+      display:flex; align-items:center; justify-content:flex-end;
+      padding:18px 20px 0;
+      margin-bottom:4px;
+    }
+    .sp-back-btn {
+      width:36px; height:36px; border-radius:50%;
+      background:var(--surface2); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-mid); transition:background 0.15s; flex-shrink:0;
+    }
+    .sp-back-btn:hover { background:rgba(255,255,255,0.1); }
+    .sp-back-btn svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; }
+
+    /* Centered profile block */
+    .sp-profile {
+      display:flex; flex-direction:column; align-items:center;
+      padding:12px 20px 28px;
+    }
+    .sp-avatar-wrap { position:relative; margin-bottom:14px; }
+    .sp-avatar {
+      width:80px; height:80px; border-radius:50%;
+      background:var(--tan); flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:32px; font-weight:800; color:#374151;
+    }
+    .sp-uname { font-size:18px; font-weight:700; color:var(--text); }
+
+    /* Section label */
+    .sp-section-label {
+      font-size:11px; font-weight:600; letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--text-dim); padding:10px 20px 5px;
+    }
+
+    /* Group card — rounded container */
+    .sp-group {
+      background:var(--surface);
+      border-radius:16px; overflow:hidden;
+      margin:0 12px 8px;
+    }
+
+    /* Row */
+    .sp-row {
+      display:flex; align-items:center; gap:14px;
+      padding:15px 16px; position:relative;
+      cursor:pointer; transition:background 0.15s;
+      border:none; background:none; width:100%; text-align:left;
+      text-decoration:none; color:var(--text);
+    }
+    .sp-group .sp-row + .sp-row::before {
+      content:''; position:absolute; top:0; left:52px; right:0;
+      height:1px; background:var(--border);
+    }
+    .sp-row:hover { background:var(--surface2); }
+
+    /* Monochrome icon — simple outline, no bg colour */
+    .sp-row-icon {
+      width:26px; height:26px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-mid);
+    }
+    .sp-row-icon svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+
+    .sp-row-text { flex:1; }
+    .sp-row-title { font-size:15px; font-weight:400; color:var(--text); }
+    .sp-row-sub   { font-size:12px; color:var(--text-dim); margin-top:1px; }
+
+    .sp-chevron {
+      width:16px; height:16px; stroke:var(--text-dim); fill:none;
+      stroke-width:2; stroke-linecap:round; flex-shrink:0;
+    }
+
+    /* Toggle pill */
+    .sp-toggle {
+      width:48px; height:28px; border-radius:14px;
+      background:rgba(255,255,255,0.12); border:none; cursor:pointer;
+      position:relative; transition:background 0.25s; flex-shrink:0;
+    }
+    .sp-toggle::after {
+      content:''; position:absolute; top:4px; left:4px;
+      width:20px; height:20px; border-radius:50%;
+      background:#666; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.25s;
+    }
+    .sp-toggle.on { background:rgba(245,227,176,0.35); }
+    .sp-toggle.on::after { transform:translateX(20px); background:var(--tan); }
+
+    .sp-row-right {
+      font-size:12px; color:var(--text-dim); flex-shrink:0;
+    }
+
+    /* Danger */
+    .sp-row.danger .sp-row-title { color:var(--red); }
+    .sp-row.danger .sp-row-icon { color:var(--red); }
+    .sp-row.danger:hover { background:rgba(239,68,68,0.06); }
+
+    /* Footer logout sits inside body, no separate footer bar */
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);} }
+    .sp-status-dot {
+      width:10px; height:10px; border-radius:50%; background:var(--green);
+      position:absolute; bottom:2px; right:2px;
+      border:2px solid #0d0d0d;
+      animation:pulse 2s infinite;
+    }
+
+    /* ══════════════════════════════════
+       HERO
+    ══════════════════════════════════ */
+    .hero {
+      display:flex; flex-direction:column; align-items:center;
+      padding:0 24px; text-align:center;
+      transition:opacity 0.5s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .hero-title {
+      font-family:'Barlow Condensed', sans-serif;
+      font-weight:900;
+      font-size:clamp(88px, 22vw, 180px);
+      line-height:0.88;
+      color:#ffffff;
+      letter-spacing:-0.02em;
+      text-transform:uppercase;
+      margin-bottom:18px;
+      opacity:0; animation:fadeUp 0.7s 0.15s cubic-bezier(0.16,1,0.3,1) forwards;
+      /* subtle text shadow for depth */
+      text-shadow: 0 0 80px rgba(245,227,176,0.15);
+    }
+
+    .hero-sub {
+      font-size:13px; color:var(--text-dim); max-width:300px;
+      line-height:1.7; margin-bottom:36px;
+      font-family:'DM Mono',monospace; letter-spacing:0.02em;
+      opacity:0; animation:fadeUp 0.6s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeIn   { from{opacity:0;}to{opacity:1;} }
+
+    /* ══════════════════════════════════
+       INPUT
+    ══════════════════════════════════ */
+    .input-zone {
+      width:100%; max-width:560px; padding:0 20px;
+      opacity:0; animation:fadeUp 0.6s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    .input-shell {
+      background:rgba(14,14,14,0.9);
+      border:1px solid var(--border-bright);
+      border-radius:20px; padding:6px;
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.6), 0 24px 60px rgba(0,0,0,0.5);
+      transition:border-color 0.3s, box-shadow 0.3s;
+      cursor:text;
+    }
+    .input-shell:focus-within {
+      border-color:rgba(245,227,176,0.3);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.6), 0 0 0 4px rgba(245,227,176,0.06), 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    .input-row {
+      display:flex; align-items:flex-end; gap:8px;
+    }
+    .input-row textarea {
+      flex:1; background:none; border:none; outline:none; resize:none;
+      color:var(--text); font-family:'DM Sans',sans-serif;
+      font-size:15px; line-height:1.5; padding:10px 10px;
+      min-height:44px; max-height:140px; height:44px;
+    }
+    .input-row textarea::placeholder { color:var(--text-dim); }
+    .input-send {
+      width:40px; height:40px; border-radius:12px;
+      background:var(--tan); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      opacity:0.25; transform:scale(0.88); pointer-events:none;
+      transition:opacity 0.2s, transform 0.2s;
+    }
+    .input-send.active { opacity:1; transform:scale(1); pointer-events:auto; }
+    .input-send:active { transform:scale(0.92); }
+    .input-send svg { stroke:#1a1a1a; fill:none; width:16px; height:16px; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+
+    .input-actions {
+      display:flex; align-items:center; gap:6px;
+      padding:2px 4px 4px; flex-wrap:wrap;
+    }
+    .input-action-btn {
+      display:flex; align-items:center; gap:5px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:999px; padding:6px 14px;
+      font-size:10px; font-family:'DM Mono',monospace;
+      color:var(--text-dim); cursor:pointer; white-space:nowrap;
+      transition:border-color 0.15s, color 0.15s;
+    }
+    .input-action-btn:hover { border-color:var(--border-bright); color:var(--text); }
+    .input-action-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+    /* attach btn in landing */
+    .land-attach-btn {
+      display:flex; align-items:center; gap:5px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:999px; padding:6px 14px;
+      font-size:10px; font-family:'DM Mono',monospace;
+      color:var(--text-dim); cursor:pointer; white-space:nowrap;
+      transition:border-color 0.15s, color 0.15s;
+      position:relative; overflow:hidden;
+    }
+    .land-attach-btn:hover { border-color:var(--border-bright); color:var(--text); }
+    .land-attach-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+    .land-attach-btn input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+
+    /* ── Footer ── */
+    .landing-footer {
+      margin-top:28px;
+      font-size:9px; color:var(--text-dim);
+      font-family:'DM Mono',monospace; letter-spacing:1.6px;
+      text-transform:uppercase;
+      opacity:0; animation:fadeIn 0.5s 0.9s ease forwards;
+    }
+
+    /* ══════════════════════════════════
+       REDIRECT ANIMATION OVERLAY
+    ══════════════════════════════════ */
+    .redirect-overlay {
+      position:fixed; inset:0; z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; opacity:0;
+    }
+    .redirect-overlay.go {
+      pointer-events:all;
+      animation:overlayReveal 0.7s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes overlayReveal {
+      0%   { opacity:0; }
+      30%  { opacity:1; }
+      100% { opacity:1; }
+    }
+
+    .redirect-bg {
+      position:absolute; inset:0;
+      background:var(--bg);
+      transform:scaleY(0); transform-origin:bottom;
+      transition:none;
+    }
+    .redirect-overlay.go .redirect-bg {
+      animation:bgReveal 0.65s cubic-bezier(0.76,0,0.24,1) 0.05s forwards;
+    }
+    @keyframes bgReveal {
+      from { transform:scaleY(0); }
+      to   { transform:scaleY(1); }
+    }
+
+    .redirect-content {
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center; gap:16px;
+      opacity:0;
+    }
+    .redirect-overlay.go .redirect-content {
+      animation:fadeUp 0.4s 0.35s ease forwards;
+    }
+    .redirect-logo {
+      width:52px; height:52px; background:var(--tan); border-radius:16px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .redirect-name {
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:900; font-size:52px; color:#fff;
+      letter-spacing:-0.01em; text-transform:uppercase; line-height:1;
+    }
+    .redirect-dots {
+      display:flex; gap:5px;
+    }
+    .redirect-dots span {
+      width:5px; height:5px; border-radius:50%;
+      background:rgba(255,255,255,0.25);
+      animation:dotPop 1.2s 0.5s ease infinite;
+    }
+    .redirect-dots span:nth-child(2) { animation-delay:0.65s; }
+    .redirect-dots span:nth-child(3) { animation-delay:0.8s; }
+    @keyframes dotPop { 0%,100%{background:rgba(255,255,255,0.2);}50%{background:var(--tan);} }
+
+    /* Aurora transition — slides up as redirect plays */
+    .redirect-overlay.go ~ #aurora-wrap,
+    body.redirecting #aurora-wrap {
+      transform:translateY(-40px) scale(1.05);
+      opacity:0;
+    }
+
+    /* Logout spinner */
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .logout-spinner {
+      display:none; width:12px; height:12px;
+      border:2px solid rgba(239,68,68,0.25);
+      border-top-color:var(--red); border-radius:50%;
+      animation:spin 0.7s linear infinite;
+    }
+    .sp-row.danger.loading { pointer-events:none; opacity:0.6; }
+    .sp-row.danger.loading .logout-spinner { display:inline-block; }
+
+    /* ══════════════════════════════════
+       USER SETTINGS SUB-PAGE
+    ══════════════════════════════════ */
+    .us-panel {
+      position:fixed; inset:0; z-index:170;
+      background:var(--bg);
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none;
+      transform:translateX(40px);
+      transition:opacity 0.25s cubic-bezier(0.22,1,0.36,1),
+                  transform 0.25s cubic-bezier(0.22,1,0.36,1);
+    }
+    .us-panel.open { opacity:1; pointer-events:all; transform:translateX(0); }
+
+    .us-header {
+      display:flex; align-items:center; gap:12px;
+      padding:18px 20px 14px;
+      border-bottom:1px solid var(--border);
+    }
+    .us-back {
+      width:36px; height:36px; border-radius:50%;
+      background:var(--surface2); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-mid); flex-shrink:0;
+      transition:background 0.15s;
+    }
+    .us-back:hover { background:rgba(255,255,255,0.1); }
+    .us-back svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; }
+    .us-title { font-size:17px; font-weight:700; color:var(--text); }
+
+    .us-body {
+      flex:1; overflow-y:auto; padding:20px 12px 40px;
+      max-width:540px; width:100%; margin:0 auto;
+    }
+    .us-body::-webkit-scrollbar { display:none; }
+
+    /* Avatar section */
+    .us-avatar-section {
+      display:flex; flex-direction:column; align-items:center;
+      padding:20px 0 28px;
+    }
+    .us-avatar-wrap { position:relative; cursor:pointer; }
+    .us-avatar-wrap:hover .us-avatar-overlay { opacity:1; }
+    .us-avatar {
+      width:88px; height:88px; border-radius:50%;
+      background:var(--tan);
+      display:flex; align-items:center; justify-content:center;
+      font-size:34px; font-weight:800; color:#374151;
+      overflow:hidden;
+    }
+    .us-avatar img { width:100%; height:100%; object-fit:cover; }
+    .us-avatar-overlay {
+      position:absolute; inset:0; border-radius:50%;
+      background:rgba(0,0,0,0.45);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; transition:opacity 0.2s;
+    }
+    .us-avatar-overlay svg { width:20px; height:20px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; }
+    .us-avatar-hint { font-size:11px; color:var(--text-dim); margin-top:8px; font-family:'DM Mono',monospace; }
+
+    /* Form fields */
+    .us-field-label {
+      font-size:11px; font-weight:600; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--text-dim);
+      padding:0 4px 6px;
+    }
+    .us-field {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; overflow:hidden; margin-bottom:8px;
+    }
+    .us-input-row {
+      display:flex; align-items:center; gap:10px;
+      padding:14px 16px;
+    }
+    .us-input-row svg { width:18px; height:18px; stroke:var(--text-dim); fill:none; stroke-width:1.7; stroke-linecap:round; flex-shrink:0; }
+    .us-input {
+      flex:1; background:none; border:none; outline:none;
+      color:var(--text); font-family:'DM Sans',sans-serif;
+      font-size:15px;
+    }
+    .us-input::placeholder { color:var(--text-dim); }
+    .us-input:disabled { color:var(--text-mid); cursor:not-allowed; }
+
+    .us-btn {
+      width:100%; padding:14px 16px;
+      border-radius:12px; border:1px solid var(--border);
+      background:var(--surface); cursor:pointer;
+      color:var(--text); font-size:15px; font-family:'DM Sans',sans-serif;
+      display:flex; align-items:center; gap:12px;
+      transition:background 0.15s, border-color 0.15s;
+      margin-bottom:8px; text-align:left;
+    }
+    .us-btn:hover { background:var(--surface2); border-color:var(--border-bright); }
+    .us-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; flex-shrink:0; }
+    .us-btn.primary {
+      background:rgba(245,227,176,0.12); border-color:rgba(245,227,176,0.25);
+      color:var(--tan);
+    }
+    .us-btn.primary:hover { background:rgba(245,227,176,0.2); }
+    .us-btn.danger { color:var(--red); }
+    .us-btn.danger:hover { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.3); }
+
+    .us-section-label {
+      font-size:11px; font-weight:600; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--text-dim);
+      padding:18px 4px 8px;
+    }
+
+    /* Toast notification */
+    .us-toast {
+      position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:#1a1a1a; border:1px solid var(--border-bright);
+      color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif;
+      padding:10px 20px; border-radius:12px;
+      opacity:0; pointer-events:none; z-index:300;
+      transition:opacity 0.2s, transform 0.2s;
+      white-space:nowrap;
+    }
+    .us-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .us-toast.success { border-color:rgba(16,185,129,0.4); color:var(--green); }
+    .us-toast.error { border-color:rgba(239,68,68,0.4); color:var(--red); }
+
+    /* Chat history modal */
+    .us-history-modal {
+      position:fixed; inset:0; z-index:180;
+      background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+      display:flex; align-items:flex-end;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.25s;
+    }
+    .us-history-modal.open { opacity:1; pointer-events:all; }
+    .us-history-sheet {
+      background:#111; border-radius:20px 20px 0 0;
+      border:1px solid var(--border); border-bottom:none;
+      width:100%; max-height:75vh;
+      display:flex; flex-direction:column;
+      transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.22,1,0.36,1);
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    .us-history-modal.open .us-history-sheet { transform:translateY(0); }
+    .us-history-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:18px 20px 12px;
+      border-bottom:1px solid var(--border);
+    }
+    .us-history-title { font-size:16px; font-weight:700; }
+    .us-history-close {
+      width:32px; height:32px; border-radius:50%;
+      background:var(--surface2); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; color:var(--text-mid);
+    }
+    .us-history-close svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; }
+    .us-history-list { overflow-y:auto; flex:1; padding:8px 12px 16px; }
+    .us-history-list::-webkit-scrollbar { display:none; }
+    .us-session-item {
+      padding:12px 14px; border-radius:10px;
+      border:1px solid var(--border); margin-bottom:6px;
+      cursor:pointer; transition:background 0.15s;
+    }
+    .us-session-item:hover { background:var(--surface2); }
+    .us-session-title { font-size:14px; color:var(--text); font-weight:500; }
+    .us-session-date { font-size:11px; color:var(--text-dim); margin-top:2px; font-family:'DM Mono',monospace; }
+    .us-history-empty { text-align:center; color:var(--text-dim); padding:32px 0; font-size:14px; }
+  </style>
+</head>
+<body>
+
+<!-- Aurora -->
+<div id="aurora-wrap"></div>
+
+<!-- Redirect overlay -->
+<div class="redirect-overlay" id="redirectOverlay">
+  <div class="redirect-bg"></div>
+  <div class="redirect-content">
+    <div class="redirect-logo">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3 L12 15 Q12 20 7 20"/>
+      </svg>
+    </div>
+    <div class="redirect-name">Jarvis</div>
+    <div class="redirect-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- Hamburger -->
+<div class="ham-wrap">
+  <button class="ham-btn" id="hamBtn" aria-label="Settings">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+
+<!-- Settings backdrop -->
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+
+<!-- Settings panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="sp-body">
+
+    <!-- Close button -->
+    <div class="sp-back-row">
+      <button class="sp-back-btn" onclick="closeSettings()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Centered avatar + name -->
+    <div class="sp-profile">
+      <div class="sp-avatar-wrap">
+        <div class="sp-avatar">{{ username[0] | upper }}</div>
+        <div class="sp-status-dot"></div>
+      </div>
+      <div class="sp-uname">{{ username }}</div>
+    </div>
+
+    <!-- My Jarvis group -->
+    <div class="sp-section-label">My Jarvis</div>
+    <div class="sp-group">
+      <a href="/chat" class="sp-row">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="sp-row-text"><div class="sp-row-title">Open Chat</div></div>
+        <svg class="sp-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="/new_chat" class="sp-row">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div class="sp-row-text"><div class="sp-row-title">New Chat</div></div>
+        <svg class="sp-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <div class="sp-row" onclick="openImagePrompt()">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="sp-row-text"><div class="sp-row-title">Generate Image</div></div>
+        <svg class="sp-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
+    <!-- Settings group -->
+    <div class="sp-section-label">Settings</div>
+    <div class="sp-group">
+      <div class="sp-row" onclick="openUserSettings()">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="sp-row-text"><div class="sp-row-title">User Settings</div></div>
+        <svg class="sp-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="sp-group">
+      <a href="/privacy" class="sp-row">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="sp-row-text"><div class="sp-row-title">Privacy &amp; Terms</div></div>
+        <svg class="sp-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+
+    <!-- About group -->
+    <div class="sp-section-label">About</div>
+    <div class="sp-group">
+      <div class="sp-row" style="cursor:default;">
+        <div class="sp-row-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="sp-row-text">
+          <div class="sp-row-title">Jarvis AI</div>
+          <div class="sp-row-sub">Version 1.0 · Beta · By Aadin</div>
+        </div>
+        <span class="sp-row-right">v1.0</span>
+      </div>
+    </div>
+
+    <!-- Log out -->
+    <div style="margin:8px 12px 0;">
+      <div class="sp-group">
+        <a class="sp-row danger" href="/logout" onclick="return triggerLogout(this)">
+          <div class="sp-row-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </div>
+          <div class="sp-row-text"><div class="sp-row-title">Log out</div></div>
+          <span class="logout-spinner"></span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ════════ SHELL ════════ -->
+<div class="shell">
+  <div class="hero" id="hero">
+    <h1 class="hero-title">Jarvis Ai</h1>
+    <p class="hero-sub">Your personal AI — code, vision,<br>images &amp; more. Built by Aadin.</p>
+  </div>
+
+  <!-- Input -->
+  <div class="input-zone">
+    <div class="input-shell" id="inputShell">
+      <div class="input-row">
+        <textarea id="mainInput" placeholder="" rows="1"></textarea>
+        <button class="input-send" id="sendBtn">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-actions">
+        <button class="input-action-btn" onclick="openImagePrompt()">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Generate Image
+        </button>
+        <label class="land-attach-btn" title="Upload an image">
+          <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          Upload Image
+          <input type="file" accept="image/*" onchange="handleLandingImage(this)">
+        </label>
+        <button class="input-action-btn" onclick="window.location.href='/quiz'">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Upload PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="landing-footer">created by Aadin kc</p>
+</div>
+
+<!-- ════════ SCRIPTS ════════ -->
+<script type="module">
+  import { Renderer, Program, Mesh, Color, Triangle } from 'https://cdn.skypack.dev/ogl';
+
+  const VERT = `#version 300 es\nin vec2 position;\nvoid main(){gl_Position=vec4(position,0.0,1.0);}`;
+  const FRAG = `#version 300 es
+precision highp float;
+uniform float uTime;uniform float uAmplitude;uniform vec3 uColorStops[3];uniform vec2 uResolution;uniform float uBlend;
+out vec4 fragColor;
+vec3 permute(vec3 x){return mod(((x*34.0)+1.0)*x,289.0);}
+float snoise(vec2 v){
+  const vec4 C=vec4(0.211324865405187,0.366025403784439,-0.577350269189626,0.024390243902439);
+  vec2 i=floor(v+dot(v,C.yy));vec2 x0=v-i+dot(i,C.xx);
+  vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);
+  vec4 x12=x0.xyxy+C.xxzz;x12.xy-=i1;i=mod(i,289.0);
+  vec3 p=permute(permute(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+  vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0);
+  m=m*m;m=m*m;
+  vec3 x=2.0*fract(p*C.www)-1.0;vec3 h=abs(x)-0.5;vec3 ox=floor(x+0.5);vec3 a0=x-ox;
+  m*=1.79284291400159-0.85373472095314*(a0*a0+h*h);
+  vec3 g;g.x=a0.x*x0.x+h.x*x0.y;g.yz=a0.yz*x12.xz+h.yz*x12.yw;
+  return 130.0*dot(m,g);
+}
+struct ColorStop{vec3 color;float position;};
+#define COLOR_RAMP(colors,factor,finalColor){int index=0;for(int i=0;i<2;i++){ColorStop cc=colors[i];bool inB=cc.position<=factor;index=int(mix(float(index),float(i),float(inB)));}ColorStop cc=colors[index];ColorStop nc=colors[index+1];float range=nc.position-cc.position;float lf=(factor-cc.position)/range;finalColor=mix(cc.color,nc.color,lf);}
+void main(){
+  vec2 uv=gl_FragCoord.xy/uResolution;
+  ColorStop colors[3];
+  colors[0]=ColorStop(uColorStops[0],0.0);
+  colors[1]=ColorStop(uColorStops[1],0.5);
+  colors[2]=ColorStop(uColorStops[2],1.0);
+  vec3 rampColor;COLOR_RAMP(colors,uv.x,rampColor);
+  float height=snoise(vec2(uv.x*2.0+uTime*0.1,uTime*0.25))*0.5*uAmplitude;
+  height=exp(height);height=(uv.y*2.0-height+0.2);
+  float intensity=0.6*height;
+  float auroraAlpha=smoothstep(0.20-uBlend*0.5,0.20+uBlend*0.5,intensity);
+  vec3 auroraColor=intensity*rampColor;
+  fragColor=vec4(auroraColor*auroraAlpha,auroraAlpha);
+}`;
+
+  const ctn = document.getElementById('aurora-wrap');
+  const renderer = new Renderer({alpha:true,premultipliedAlpha:true,antialias:true});
+  const gl = renderer.gl;
+  gl.clearColor(0,0,0,0); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  gl.canvas.style.cssText='width:100%;height:100%;display:block;background:transparent;';
+  ctn.appendChild(gl.canvas);
+
+  const stops = ['#f5e3b0','#a78bfa','#3b82f6'];
+  const stopsArr = stops.map(h=>{ const c=new Color(h); return [c.r,c.g,c.b]; });
+  const geometry = new Triangle(gl);
+  if(geometry.attributes.uv) delete geometry.attributes.uv;
+
+  const program = new Program(gl,{
+    vertex:VERT, fragment:FRAG,
+    uniforms:{
+      uTime:{value:0}, uAmplitude:{value:1.1},
+      uColorStops:{value:stopsArr},
+      uResolution:{value:[ctn.offsetWidth,ctn.offsetHeight]},
+      uBlend:{value:0.65}
+    }
+  });
+  const mesh = new Mesh(gl,{geometry,program});
+
+  function resize(){ renderer.setSize(ctn.offsetWidth,ctn.offsetHeight); program.uniforms.uResolution.value=[ctn.offsetWidth,ctn.offsetHeight]; }
+  window.addEventListener('resize',resize); resize();
+
+  const update = t => { requestAnimationFrame(update); program.uniforms.uTime.value=t*0.0004; renderer.render({scene:mesh}); };
+  requestAnimationFrame(update);
+</script>
+
+<script>
+  // ── Animated placeholder ──
+  const mainInput = document.getElementById('mainInput');
+  const sendBtn   = document.getElementById('sendBtn');
+  const phrases   = ['Ask Jarvis anything...','Generate an image...','Explain this code...','Summarise a PDF...','What can I help with?'];
+  let pi=0,ci=0,del=false,spd=100;
+  function typeLoop(){
+    if(document.activeElement===mainInput){setTimeout(typeLoop,250);return;}
+    const cur=phrases[pi];
+    mainInput.placeholder=del?cur.slice(0,ci-1):cur.slice(0,ci+1);
+    ci+=del?-1:1; spd=del?50:100;
+    if(!del&&ci===cur.length){del=true;spd=2200;}
+    else if(del&&ci===0){del=false;pi=(pi+1)%phrases.length;spd=400;}
+    setTimeout(typeLoop,spd);
+  }
+  typeLoop();
+
+  // ── Input state ──
+  mainInput.addEventListener('input',function(){
+    this.style.height='44px';
+    if(this.scrollHeight>44) this.style.height=this.scrollHeight+'px';
+    sendBtn.classList.toggle('active',this.value.trim().length>0);
+  });
+
+  // ── Redirect with animation ──
+  function doRedirect(path){
+    document.body.classList.add('redirecting');
+    const ov = document.getElementById('redirectOverlay');
+    ov.classList.add('go');
+    setTimeout(()=>{ window.location.href=path; },800);
+  }
+
+  function handleSend(){
+    const msg = mainInput.value.trim();
+    if(msg){
+      sessionStorage.setItem('jarvis_pending',msg);
+      doRedirect('/chat');
+    } else {
+      // touch/focus → just redirect to chat
+      doRedirect('/chat');
+    }
+  }
+
+  sendBtn.addEventListener('click',()=>{ doRedirect('/chat'); });
+  mainInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doRedirect('/chat'); }
+  });
+  // Tap the input shell (not the textarea) → redirect
+  document.getElementById('inputShell').addEventListener('click',function(e){
+    if(e.target===mainInput) return; // let focus happen naturally for typing
+    doRedirect('/chat');
+  });
+  mainInput.addEventListener('focus',function(){
+    // small delay so they can type, but redirect on first keydown
+    // Actually: just redirect immediately on focus (touches feel instant)
+    const isMobile = window.matchMedia('(max-width:700px)').matches;
+    if(isMobile){ this.blur(); doRedirect('/chat'); }
+  });
+
+  // ── Image upload on landing → redirect to chat ──
+  window.handleLandingImage = function(input){
+    const file = input.files[0];
+    if(!file) return;
+    sessionStorage.setItem('jarvis_pending', 'Describe this image');
+    doRedirect('/chat');
+  };
+
+  // ── Image prompt ──
+  window.openImagePrompt = function(){
+    sessionStorage.setItem('jarvis_pending','Generate an image of ');
+    doRedirect('/chat');
+  };
+
+  // ── Settings panel ──
+  const hamBtn   = document.getElementById('hamBtn');
+  const panel    = document.getElementById('settingsPanel');
+  const backdrop = document.getElementById('settingsBackdrop');
+
+  function openSettings(){
+    hamBtn.classList.add('open');
+    panel.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeSettings(){
+    hamBtn.classList.remove('open');
+    panel.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  window.closeSettings = closeSettings;
+
+  hamBtn.addEventListener('click',()=>{ panel.classList.contains('open')?closeSettings():openSettings(); });
+
+  // Hamburger ripple
+  hamBtn.addEventListener('pointerdown',function(e){
+    const r=document.createElement('span'); r.className='ham-ripple';
+    const s=Math.max(hamBtn.offsetWidth,hamBtn.offsetHeight);
+    r.style.cssText='width:'+s+'px;height:'+s+'px;left:'+(e.offsetX-s/2)+'px;top:'+(e.offsetY-s/2)+'px;';
+    hamBtn.appendChild(r); r.addEventListener('animationend',()=>r.remove());
+  });
+
+  // ── Dark mode toggle (actually works!) ──
+  const darkToggle = document.getElementById('darkToggle');
+  const darkLabel  = document.getElementById('darkModeLabel');
+  let isDark = localStorage.getItem('jarvis-dark') !== '0';
+
+  function applyTheme(){
+    darkToggle.classList.toggle('on', isDark);
+    darkLabel.textContent = isDark ? 'Dark' : 'Light';
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('jarvis-dark', isDark ? '1' : '0');
+  }
+  applyTheme();
+
+  window.toggleDark = function(){
+    isDark = !isDark;
+    applyTheme();
+  };
+
+  // ── Logout ──
+  window.triggerLogout = function(el){
+    el.classList.add('loading');
+    const t = setTimeout(()=>{ window.location.href='/'; },600);
+    fetch('/logout_now',{method:'POST'})
+      .then(()=>{ clearTimeout(t); window.location.href='/'; })
+      .catch(()=>{ clearTimeout(t); window.location.href='/'; });
+    return false;
+  };
+</script>
+
+<!-- Toast -->
+<div class="us-toast" id="usToast"></div>
+
+<!-- Chat History Modal -->
+<div class="us-history-modal" id="usHistoryModal">
+  <div class="us-history-sheet">
+    <div class="us-history-header">
+      <span class="us-history-title">Chat History</span>
+      <button class="us-history-close" onclick="closeHistoryModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="us-history-list" id="usHistoryList">
+      <div class="us-history-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- User Settings Panel -->
+<div class="us-panel" id="userSettingsPanel">
+  <div class="us-header">
+    <button class="us-back" onclick="closeUserSettings()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="us-title">User Settings</span>
+  </div>
+  <div class="us-body">
+
+    <!-- Profile picture -->
+    <div class="us-avatar-section">
+      <div class="us-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+        <div class="us-avatar" id="usAvatar">{{ username[0] | upper }}</div>
+        <div class="us-avatar-overlay">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+      <span class="us-avatar-hint">Tap to change photo</span>
+    </div>
+
+    <!-- Username -->
+    <div class="us-section-label">Account</div>
+    <div class="us-field">
+      <div class="us-input-row">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <input class="us-input" id="usUsernameInput" placeholder="New username" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+    </div>
+    <button class="us-btn primary" onclick="changeUsername()">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Save Username
+    </button>
+
+    <!-- Password -->
+    <div class="us-section-label">Security</div>
+    <div class="us-field">
+      <div class="us-input-row">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input class="us-input" id="usCurrentPw" type="password" placeholder="Current password">
+      </div>
+    </div>
+    <div class="us-field">
+      <div class="us-input-row">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input class="us-input" id="usNewPw" type="password" placeholder="New password">
+      </div>
+    </div>
+    <button class="us-btn primary" onclick="changePassword()">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      Update Password
+    </button>
+
+    <!-- Chat history -->
+    <div class="us-section-label">Data</div>
+    <button class="us-btn" onclick="openHistoryModal()">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      View Chat History
+    </button>
+
+    <!-- Danger zone -->
+    <div class="us-section-label">Danger Zone</div>
+    <button class="us-btn danger" onclick="confirmDeleteAccount()">
+      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      Delete Account
+    </button>
+
+  </div>
+</div>
+
+
+<script>
+  // ── User Settings panel ──
+  const usPanel = document.getElementById('userSettingsPanel');
+
+  window.openUserSettings = function(){
+    usPanel.classList.add('open');
+    document.body.style.overflow='hidden';
+  };
+  window.closeUserSettings = function(){
+    usPanel.classList.remove('open');
+    document.body.style.overflow='';
+  };
+
+  // ── Toast ──
+  function showToast(msg, type=''){
+    const t = document.getElementById('usToast');
+    t.textContent = msg;
+    t.className = 'us-toast' + (type ? ' '+type : '');
+    void t.offsetWidth;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2800);
+  }
+
+  // ── Change username ──
+  window.changeUsername = async function(){
+    const val = document.getElementById('usUsernameInput').value.trim();
+    if(!val){ showToast('Enter a new username', 'error'); return; }
+    if(val.length < 3){ showToast('Username must be 3+ characters', 'error'); return; }
+    try {
+      const r = await fetch('/update_username', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username: val})
+      });
+      const d = await r.json();
+      if(d.ok){ showToast('Username updated!', 'success'); document.getElementById('usUsernameInput').value=''; }
+      else showToast(d.error || 'Failed', 'error');
+    } catch(e){ showToast('Network error', 'error'); }
+  };
+
+  // ── Change password ──
+  window.changePassword = async function(){
+    const cur = document.getElementById('usCurrentPw').value;
+    const nw  = document.getElementById('usNewPw').value;
+    if(!cur||!nw){ showToast('Fill in both fields', 'error'); return; }
+    if(nw.length < 4){ showToast('New password must be 4+ chars', 'error'); return; }
+    try {
+      const r = await fetch('/update_password', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({current: cur, new_password: nw})
+      });
+      const d = await r.json();
+      if(d.ok){
+        showToast('Password updated!', 'success');
+        document.getElementById('usCurrentPw').value='';
+        document.getElementById('usNewPw').value='';
+      } else showToast(d.error || 'Failed', 'error');
+    } catch(e){ showToast('Network error', 'error'); }
+  };
+
+  // ── Upload avatar (stored as base64 in localStorage for now) ──
+  window.uploadAvatar = function(input){
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const b64 = e.target.result;
+      localStorage.setItem('jarvis-avatar', b64);
+      const av = document.getElementById('usAvatar');
+      av.innerHTML = '<img src="'+b64+'" alt="avatar">';
+    };
+    reader.readAsDataURL(file);
+  };
+  // Load avatar on page load
+  (function(){
+    const saved = localStorage.getItem('jarvis-avatar');
+    const av = document.getElementById('usAvatar');
+    if(saved && av) av.innerHTML = '<img src="'+saved+'" alt="avatar">';
+  })();
+
+  // ── Chat history ──
+  window.openHistoryModal = async function(){
+    const modal = document.getElementById('usHistoryModal');
+    const list  = document.getElementById('usHistoryList');
+    modal.classList.add('open');
+    list.innerHTML = '<div class="us-history-empty">Loading...</div>';
+    try {
+      const r = await fetch('/get_sessions');
+      const d = await r.json();
+      if(d.sessions && d.sessions.length){
+        list.innerHTML = d.sessions.map(s =>
+          `<div class="us-session-item" onclick="window.location.href='/chat?session=${s.session_id}'">
+            <div class="us-session-title">${s.title || 'Untitled chat'}</div>
+            <div class="us-session-date">${s.created_at}</div>
+          </div>`
+        ).join('');
+      } else {
+        list.innerHTML = '<div class="us-history-empty">No chats yet — start a conversation!</div>';
+      }
+    } catch(e){
+      list.innerHTML = '<div class="us-history-empty">Could not load history</div>';
+    }
+  };
+  window.closeHistoryModal = function(){
+    document.getElementById('usHistoryModal').classList.remove('open');
+  };
+  // Close modal on backdrop tap
+  document.getElementById('usHistoryModal').addEventListener('click', function(e){
+    if(e.target === this) closeHistoryModal();
+  });
+
+  // ── Delete account ──
+  window.confirmDeleteAccount = function(){
+    if(confirm('Are you sure? This will permanently delete your account and all your chats.')){
+      fetch('/delete_account', {method:'POST'})
+        .then(r=>r.json())
+        .then(d=>{ if(d.ok) window.location.href='/'; else showToast('Failed to delete', 'error'); })
+        .catch(()=>showToast('Network error', 'error'));
+    }
+  };
+</script>
+
+</body>
+</html>
