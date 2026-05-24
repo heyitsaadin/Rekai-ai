@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+<title>Jarvis Admin</title>
+<style>
+:root {
+  --bg: #f7f7f6;
+  --surface: #ffffff;
+  --surface2: #f0f0ee;
+  --border: rgba(0,0,0,0.07);
+  --border-med: rgba(0,0,0,0.10);
+  --text: #181816;
+  --mid: #706f6c;
+  --subtle: #a0a09d;
+  --accent: #181816;
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.08);
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.08);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.08);
+  --blue: #3b82f6;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-pill: 9999px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  --transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --border: rgba(255,255,255,0.07);
+  --border-med: rgba(255,255,255,0.11);
+  --text: #f0f0ee;
+  --mid: #8a8a87;
+  --subtle: #555553;
+  --accent: #f0f0ee;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100dvh;
+  transition: background 0.25s, color 0.25s;
+}
+button { cursor: pointer; font-family: inherit; outline: none; border: none; background: none; }
+a { text-decoration: none; color: inherit; }
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ── LOGIN ── */
+.login-page {
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%; max-width: 380px;
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 36px 32px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+.login-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 28px;
+}
+.login-logo-icon {
+  width: 38px; height: 38px;
+  background: var(--text);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-logo-icon svg { width: 20px; height: 20px; }
+.login-logo-text { font-size: 15px; font-weight: 700; }
+.login-logo-sub { font-size: 12px; color: var(--mid); margin-top: 1px; }
+.login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.login-card p { color: var(--mid); font-size: 14px; margin-bottom: 28px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--mid); margin-bottom: 6px; letter-spacing: 0.01em; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border-med);
+  border-radius: 12px;
+  color: var(--text);
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.18s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--text);
+}
+.field textarea { resize: vertical; min-height: 80px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--text); color: var(--bg); }
+.btn-primary:active { opacity: 0.8; transform: scale(0.97); }
+.btn-ghost {
+  background: var(--surface2); color: var(--text);
+  border: 1.5px solid var(--border-med);
+}
+.btn-ghost:hover { background: var(--border); }
+.btn-ghost:active { transform: scale(0.97); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1.5px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-danger:active { transform: scale(0.97); }
+.btn-success { background: var(--green-dim); color: var(--green); border: 1.5px solid rgba(34,197,94,0.25); }
+.btn-success:hover { background: var(--green); color: #fff; }
+.btn-success:active { transform: scale(0.97); }
+.btn-amber { background: var(--amber-dim); color: var(--amber); border: 1.5px solid rgba(245,158,11,0.25); }
+.btn-amber:hover { background: var(--amber); color: #fff; }
+.btn-amber:active { transform: scale(0.97); }
+.btn-sm { padding: 7px 14px; font-size: 12px; }
+.btn-full { width: 100%; }
+.error-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--red-dim);
+  border: 1.5px solid rgba(239,68,68,0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--red);
+  margin-top: 14px;
+}
+
+/* ── SHELL ── */
+.shell { display: flex; height: 100dvh; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 260px; min-width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  height: 100dvh;
+  overflow-y: auto;
+  transition: width 0.3s;
+}
+.sidebar-top {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px;
+}
+.sidebar-brand-icon {
+  width: 34px; height: 34px;
+  background: var(--text);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar-brand-icon svg { width: 18px; height: 18px; }
+.sidebar-brand-name { font-size: 14px; font-weight: 700; }
+.sidebar-brand-sub { font-size: 11px; color: var(--mid); }
+.nav-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 16px 16px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin: 1px 8px;
+  font-size: 14px;
+  color: var(--mid);
+  cursor: pointer;
+  transition: var(--transition);
+  border: none; background: none; width: calc(100% - 16px); text-align: left;
+}
+.nav-item svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+.nav-item.active svg { stroke: var(--text); }
+.sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+.sidebar-footer .btn { width: 100%; justify-content: flex-start; }
+.theme-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin: 1px 8px;
+  color: var(--mid);
+  font-size: 14px;
+  cursor: pointer;
+}
+.theme-row:hover { background: var(--surface2); }
+.toggle-pill {
+  width: 36px; height: 20px;
+  background: var(--border-med);
+  border-radius: var(--radius-pill);
+  position: relative;
+  transition: background 0.22s;
+  cursor: pointer;
+  border: none;
+  flex-shrink: 0;
+}
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform 0.22s, background 0.22s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-pill.on { background: var(--text); }
+.toggle-pill.on::after { transform: translateX(16px); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 16px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green-dim);
+  border: 1.5px solid rgba(34,197,94,0.25);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── SECTION ── */
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+.page-head { margin-bottom: 20px; }
+.page-head h2 { font-size: 20px; font-weight: 700; }
+.page-head p { color: var(--mid); font-size: 13px; margin-top: 3px; }
+
+/* ── STAT GRID ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.stat-label { font-size: 11px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+.stat-sub { font-size: 12px; color: var(--mid); margin-top: 5px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.card-title { font-size: 13px; font-weight: 700; }
+.card-body { padding: 20px; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(0,0,0,0.015); }
+[data-theme="dark"] tr:hover td { background: rgba(255,255,255,0.02); }
+.td-actions { display: flex; gap: 6px; align-items: center; }
+
+/* ── VISIT CHART ── */
+.chart-wrap { padding: 20px; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.bar-date { font-size: 12px; font-weight: 600; color: var(--mid); width: 44px; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; height: 22px; background: var(--surface2); border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--text); border-radius: 6px; opacity: 0.15; transition: width 0.6s ease; }
+[data-theme="dark"] .bar-fill { opacity: 0.4; }
+.bar-val { font-size: 12px; font-weight: 700; color: var(--text); width: 28px; flex-shrink: 0; }
+
+/* ── TAGS ── */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.tag-default { background: var(--surface2); color: var(--mid); }
+.tag-red { background: var(--red-dim); color: var(--red); }
+.tag-green { background: var(--green-dim); color: var(--green); }
+.tag-amber { background: var(--amber-dim); color: var(--amber); }
+.tag-blue { background: rgba(59,130,246,0.1); color: var(--blue); }
+
+/* ── PROFILE GRID ── */
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.pc-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.pc-avatar {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: var(--mid);
+  flex-shrink: 0;
+}
+.pc-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.pc-meta { font-size: 11px; color: var(--mid); }
+.pc-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.pcs-item { }
+.pcs-label { font-size: 10px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.05em; }
+.pcs-val { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+.topics-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.groq-quote {
+  font-size: 12px; color: var(--mid); font-style: italic;
+  line-height: 1.55;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.pc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── UNLOCK BANNER ── */
+.unlock-banner {
+  background: var(--amber-dim);
+  border: 1.5px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  flex-wrap: wrap;
+}
+.unlock-banner-text { font-size: 13px; font-weight: 600; color: var(--amber); }
+.unlock-banner-form { display: flex; gap: 8px; }
+.unlock-banner-form input {
+  background: var(--surface);
+  border: 1.5px solid rgba(245,158,11,0.3);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 160px;
+}
+.unlock-banner-form input:focus { border-color: var(--amber); }
+
+/* ── BAN FORM ── */
+.ban-form {
+  display: flex; gap: 10px; align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.ban-form .field { flex: 1; min-width: 110px; margin-bottom: 0; }
+
+/* ── NOTIFY FORM ── */
+.notify-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  max-width: 500px;
+  box-shadow: var(--shadow);
+}
+
+/* ── LIVE USERS ── */
+.live-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+}
+.live-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.live-item:last-child { border-bottom: none; }
+.live-item-user { font-weight: 700; }
+.live-item-since { font-size: 12px; color: var(--mid); }
+.live-empty { padding: 32px; text-align: center; color: var(--mid); font-size: 13px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 1000; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 22px;
+  width: 100%; max-width: 600px;
+  max-height: 82dvh;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  animation: modalPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-sm { max-width: 380px; }
+@keyframes modalPop { from{opacity:0;transform:scale(0.9);} to{opacity:1;transform:scale(1);} }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-head h3 { font-size: 16px; font-weight: 700; }
+.modal-close-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--mid); font-size: 16px; line-height: 1;
+  transition: var(--transition);
+}
+.modal-close-btn:hover { background: var(--border); color: var(--text); transform: rotate(90deg); }
+.modal-body { overflow-y: auto; padding: 20px 22px; flex: 1; }
+.modal-foot {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── CHAT SESSION VIEWER ── */
+.session-block { margin-bottom: 22px; }
+.session-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.msg-row { display: flex; gap: 10px; margin-bottom: 8px; }
+.msg-row.user { flex-direction: row-reverse; }
+.msg-sender-badge {
+  font-size: 10px; font-weight: 700; color: var(--subtle);
+  padding-top: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.msg-bubble {
+  max-width: 80%; padding: 9px 13px;
+  border-radius: 16px 16px 16px 4px;
+  background: var(--surface2);
+  font-size: 13px; line-height: 1.55;
+  word-break: break-word;
+}
+.msg-row.user .msg-bubble {
+  border-radius: 16px 16px 4px 16px;
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ── AI ANALYSIS ── */
+.analysis-field { margin-bottom: 16px; }
+.af-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mid); margin-bottom: 5px; }
+.af-val { font-size: 14px; color: var(--text); line-height: 1.55; }
+.risk-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--red-dim); border: 1.5px solid rgba(239,68,68,0.2);
+  border-radius: 10px; padding: 9px 12px;
+  font-size: 13px; color: var(--red); margin-bottom: 6px;
+}
+
+/* ── SPINNER ── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border-med);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-wrap { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 32px; color: var(--mid); font-size: 13px; }
+
+/* ── EMPTY STATE ── */
+.empty { padding: 36px 20px; text-align: center; color: var(--mid); font-size: 13px; }
+
+/* ══════════════════════════════════════
+   MOBILE DRAWER + BOTTOM NAV
+══════════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+.menu-btn {
+  display: none;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border-med);
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.menu-btn svg { width: 18px; height: 18px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* Backdrop */
+.drawer-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+.drawer-backdrop.open { display: block; opacity: 1; }
+
+/* Mobile drawer — slides in from left */
+.mobile-drawer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 280px; height: 100dvh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 210;
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+.mobile-drawer.open { transform: translateX(0); }
+.mobile-drawer-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.mobile-drawer-brand { display: flex; align-items: center; gap: 10px; }
+.mobile-drawer-close {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--mid); font-size: 18px; line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.mobile-drawer-close:hover { transform: rotate(90deg); color: var(--text); }
+.mobile-drawer-nav { flex: 1; padding: 10px 0; }
+.mobile-drawer-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Bottom tab bar */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  gap: 0;
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--subtle);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none; background: none;
+  transition: color 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bottom-nav-item.active { color: var(--text); }
+.bottom-nav-item.active svg { stroke-width: 2.2; }
+.bottom-nav-more { /* "More" opens drawer */ }
+
+/* ══════════════════════════════════════
+   MOBILE BREAKPOINT  (≤ 680px)
+══════════════════════════════════════ */
+@media (max-width: 680px) {
+  /* Hide desktop sidebar */
+  .sidebar { display: none; }
+
+  /* Show mobile controls */
+  .menu-btn { display: flex; }
+  .bottom-nav { display: flex; }
+
+  /* Shell takes full width */
+  .shell { height: 100dvh; }
+  .main { height: 100dvh; }
+
+  /* Topbar adjusts */
+  .topbar { padding: 12px 16px; }
+  .topbar-title { font-size: 15px; }
+
+  /* Content gets bottom padding for tab bar */
+  .content {
+    padding: 16px 14px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  /* Stat grid — 2 col on mobile */
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-value { font-size: 26px; }
+
+  /* Visit chart full width */
+  .card { max-width: 100% !important; }
+
+  /* Profile cards — single col */
+  .profile-grid { grid-template-columns: 1fr; }
+
+  /* Tables — make them scroll or stack */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* All Users: stack rows as cards */
+  .users-table thead { display: none; }
+  .users-table tbody tr {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  .users-table tbody tr:hover { background: var(--surface); }
+  .users-table td {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: none;
+    font-size: 13px;
+  }
+  .users-table td::before {
+    content: attr(data-label);
+    font-size: 11px; font-weight: 700; color: var(--subtle);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    flex-shrink: 0; margin-right: 8px;
+  }
+  .users-table td:first-child { font-size: 15px; font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+  .users-table td:first-child::before { display: none; }
+  .td-actions { flex-wrap: wrap; }
+
+  /* Bans table — same card stack */
+  .bans-table thead { display: none; }
+  .bans-table tbody tr {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .bans-table td {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 0; border-bottom: none; font-size: 13px;
+  }
+  .bans-table td::before {
+    content: attr(data-label);
+    font-size: 11px; font-weight: 700; color: var(--subtle);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    flex-shrink: 0; margin-right: 8px;
+  }
+
+  /* Ban form stacks vertically */
+  .ban-form { flex-direction: column; gap: 10px; }
+  .ban-form .field { min-width: unset; width: 100%; }
+  .ban-form .btn { width: 100%; margin-top: 4px; }
+
+  /* Unlock banner stacks */
+  .unlock-banner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .unlock-banner-form { width: 100%; }
+  .unlock-banner-form input { flex: 1; width: auto; }
+
+  /* Notify form full width */
+  .notify-form { max-width: 100%; }
+
+  /* Live list full width */
+  .live-list { max-width: 100%; }
+
+  /* Modal tweaks */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal {
+    border-radius: 22px 22px 0 0;
+    max-width: 100%;
+    max-height: 88dvh;
+    animation: modalSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes modalSlideUp { from{transform:translateY(100%);opacity:0.5;} to{transform:translateY(0);opacity:1;} }
+  .modal-sm { max-width: 100%; }
+
+  /* Toast bottom positioning above tab bar */
+  #toast { bottom: calc(70px + env(safe-area-inset-bottom)); right: 16px; left: 16px; max-width: unset; text-align: center; border-radius: 14px; }
+
+  /* Page head size */
+  .page-head h2 { font-size: 18px; }
+}
+
+/* Tablet — keep sidebar but narrower */
+@media (min-width: 681px) and (max-width: 900px) {
+  .sidebar { width: 210px; min-width: 210px; }
+  .content { padding: 18px; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: var(--radius-pill);
+  padding: 12px 18px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(16px) scale(0.95);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  max-width: 300px;
+}
+#toast.show { transform: translateY(0) scale(1); opacity: 1; }
+</style>
+</head>
+<body data-theme="light">
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+{% if not logged_in %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M34,29 L48,29 L51,49 L37,49 Z" fill="white"/>
+          <path d="M54,29 L63,29 Q74,29 74,39 Q74,49 63,49 L54,49 Z" fill="white"/>
+          <circle cx="42" cy="62" r="11" fill="white"/>
+          <polygon points="54,52 74,72 54,72" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-logo-text">Jarvis</div>
+        <div class="login-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <h1>Welcome back</h1>
+    <p>Sign in to access the control panel</p>
+    <form method="POST">
+      <input type="hidden" name="form_type" value="login">
+      <div class="field">
+        <label>Admin Password</label>
+        <input type="password" name="password" autofocus placeholder="Enter password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:6px;">Continue</button>
+      {% if error %}
+      <div class="error-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ error }}
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+{% else %}
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <svg viewBox="0 0 100 100" fill="none">
+            <path d="M34,29 L48,29 L51,49 L37,49 Z" fill="white"/>
+            <path d="M54,29 L63,29 Q74,29 74,39 Q74,49 63,49 L54,49 Z" fill="white"/>
+            <circle cx="42" cy="62" r="11" fill="white"/>
+            <polygon points="54,52 74,72 54,72" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <div class="sidebar-brand-name">Jarvis</div>
+          <div style="font-size:11px;color:var(--mid);">Admin Panel</div>
+        </div>
+      </div>
+    </div>
+
+    <nav style="padding:10px 0 8px;">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" onclick="nav('overview',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="nav('live',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Live Users
+      </button>
+      <div class="nav-section-label">Users</div>
+      <button class="nav-item" onclick="nav('users',this)">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        All Users
+      </button>
+      <button class="nav-item" onclick="nav('profiles',this)">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Profiles &amp; Chats
+      </button>
+      <button class="nav-item" onclick="nav('bans',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Bans
+      </button>
+      <div class="nav-section-label">Tools</div>
+      <button class="nav-item" onclick="nav('notify',this)">
+        <svg viewBox="0 0 24 24"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notifications
+      </button>
+    </nav>
+
+    <div style="padding:8px 16px 6px;">
+      <div class="theme-row" onclick="toggleTheme()">
+        <div style="display:flex;align-items:center;gap:11px;color:var(--mid);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark mode
+        </div>
+        <button class="toggle-pill" id="themeToggle" onclick="event.stopPropagation();toggleTheme()"></button>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/admin/logout" class="btn btn-ghost btn-sm">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log out
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="menu-btn" onclick="openDrawer()" aria-label="Menu">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-pill">
+          <div class="live-dot"></div>
+          <span id="live-count">0</span> online
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── OVERVIEW ── -->
+      <div id="sec-overview" class="section active">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ users|length }}</div>
+            <div class="stat-sub">registered</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Visits</div>
+            <div class="stat-value">{{ total_visits }}</div>
+            <div class="stat-sub">all time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Messages</div>
+            <div class="stat-value">{{ total_messages }}</div>
+            <div class="stat-sub">across all users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Bans</div>
+            <div class="stat-value">{{ bans|length }}</div>
+            <div class="stat-sub">users &amp; IPs</div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:480px;">
+          <div class="card-head">
+            <span class="card-title">Visits — Last 7 Days</span>
+          </div>
+          <div class="chart-wrap">
+            {% if visits %}
+              {% set max_v = visits | map(attribute='count') | max %}
+              {% for v in visits %}
+              <div class="bar-row">
+                <span class="bar-date">{{ v.date[-5:] }}</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:{{ (v.count / max_v * 100)|int }}%"></div>
+                </div>
+                <span class="bar-val">{{ v.count }}</span>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">No visit data yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LIVE USERS ── -->
+      <div id="sec-live" class="section">
+        <div class="page-head">
+          <h2>Live Users</h2>
+          <p>Active in the last 5 minutes</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadLiveUsers()" style="margin-bottom:16px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <div class="live-list" id="live-list">
+          <div class="live-empty">Click refresh to load.</div>
+        </div>
+      </div>
+
+      <!-- ── ALL USERS ── -->
+      <div id="sec-users" class="section">
+        <div class="page-head">
+          <h2>All Users</h2>
+          <p>{{ users|length }} registered accounts</p>
+        </div>
+        <div class="card">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Messages</th>
+                <th>Chats</th>
+                <th>Sentiment</th>
+                <th>Last Active</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              {% set p = user_profiles.get(u.username, {}) %}
+              {% set pr = p.get('profile', {}) %}
+              <tr>
+                <td style="font-weight:700;">{{ u.username }}</td>
+                <td data-label="Messages" style="color:var(--mid);">{{ pr.get('user_messages', 0) }}</td>
+                <td data-label="Chats" style="color:var(--mid);">{{ p.get('chat_count', 0) }}</td>
+                <td data-label="Sentiment">
+                  {% set s = pr.get('sentiment','') %}
+                  {% if s %}<span class="tag tag-default">{{ s }}</span>{% else %}<span style="color:var(--subtle);">—</span>{% endif %}
+                </td>
+                <td data-label="Last Active" style="color:var(--mid);font-size:12px;">{{ p.get('last_updated','—') }}</td>
+                <td>
+                  <div class="td-actions">
+                    <button class="btn btn-amber btn-sm" onclick="openBanModal('user','{{ u.username }}')">Ban</button>
+                    <a href="/admin/delete_user/{{ u.username }}"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('Permanently delete {{ u.username }}?')">Delete</a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PROFILES & CHATS ── -->
+      <div id="sec-profiles" class="section">
+        <div class="page-head">
+          <h2>Profiles &amp; Chats</h2>
+          <p>User behaviour profiles and chat history</p>
+        </div>
+
+        <div class="unlock-banner" id="unlock-banner" {% if session.get('chat_unlocked') %}style="display:none"{% endif %}>
+          <span class="unlock-banner-text">🔒 Chat history locked — enter owner code to unlock</span>
+          <div class="unlock-banner-form">
+            <input type="password" id="owner-code-input" placeholder="Owner code">
+            <button class="btn btn-amber btn-sm" onclick="unlockChats()">Unlock</button>
+          </div>
+        </div>
+
+        {% if user_profiles %}
+        <div class="profile-grid">
+          {% for uname, pdata in user_profiles.items() %}
+          {% set pr = pdata.profile %}
+          <div class="profile-card">
+            <div class="pc-head">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="pc-avatar">{{ uname[0].upper() }}</div>
+                <div>
+                  <div class="pc-name">{{ uname }}</div>
+                  <div class="pc-meta">Updated {{ pdata.last_updated or '—' }}</div>
+                </div>
+              </div>
+              {% set s = pr.get('sentiment','') %}
+              {% if s %}<span class="tag tag-default">{{ s }}</span>{% endif %}
+            </div>
+
+            <div class="pc-stats">
+              <div class="pcs-item">
+                <div class="pcs-label">Msgs</div>
+                <div class="pcs-val">{{ pr.get('user_messages',0) }}</div>
+              </div>
+              <div class="pcs-item">
+                <div class="pcs-label">Avg Len</div>
+                <div class="pcs-val">{{ pr.get('avg_length',0) }}</div>
+              </div>
+              <div class="pcs-item">
+                <div class="pcs-label">Chats</div>
+                <div class="pcs-val">{{ pdata.chat_count }}</div>
+              </div>
+            </div>
+
+            {% if pr.get('top_topics') %}
+            <div class="topics-row">
+              {% for t in pr.top_topics %}
+              <span class="tag tag-blue">{{ t }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pr.get('groq_summary') %}
+            <div class="groq-quote">{{ pr.groq_summary }}</div>
+            {% endif %}
+
+            <div class="pc-actions">
+              <button class="btn btn-ghost btn-sm" onclick="viewChats('{{ uname }}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Chats
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="analyseChats('{{ uname }}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                AI Analysis
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="deleteUserChats('{{ uname }}')">Clear Chats</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">No profiles yet.</div>
+        {% endif %}
+      </div>
+
+      <!-- ── BANS ── -->
+      <div id="sec-bans" class="section">
+        <div class="page-head">
+          <h2>Bans</h2>
+          <p>Block users or IP addresses from accessing Jarvis</p>
+        </div>
+
+        <div class="ban-form">
+          <div class="field" style="min-width:100px;max-width:120px;">
+            <label>Type</label>
+            <select id="ban-type">
+              <option value="user">User</option>
+              <option value="ip">IP</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Username / IP</label>
+            <input type="text" id="ban-value" placeholder="e.g. johndoe or 1.2.3.4">
+          </div>
+          <div class="field">
+            <label>Reason (optional)</label>
+            <input type="text" id="ban-reason" placeholder="Why are you banning?">
+          </div>
+          <button class="btn btn-danger" onclick="submitBan()" style="flex-shrink:0;">Ban</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Active Bans</span>
+            <span class="tag tag-default">{{ bans|length }}</span>
+          </div>
+          <table id="bans-table" class="bans-table">
+            <thead>
+              <tr><th>Type</th><th>Value</th><th>Reason</th><th>Banned At</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% if bans %}
+                {% for b in bans %}
+                <tr id="banrow-{{ loop.index }}">
+                  <td data-label="Type"><span class="tag {% if b.type=='ip' %}tag-amber{% else %}tag-red{% endif %}">{{ b.type }}</span></td>
+                  <td data-label="Value" style="font-weight:600;">{{ b.value }}</td>
+                  <td data-label="Reason" style="color:var(--mid);font-size:12px;">{{ b.reason or '—' }}</td>
+                  <td data-label="Banned At" style="color:var(--mid);font-size:12px;">{{ b.banned_at }}</td>
+                  <td><button class="btn btn-success btn-sm" onclick="unban('{{ b.value }}',this)">Unban</button></td>
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="5" class="empty">No active bans.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <div id="sec-notify" class="section">
+        <div class="page-head">
+          <h2>Send Notification</h2>
+          <p>Push a message to a specific user or broadcast to everyone</p>
+        </div>
+        <div class="notify-form">
+          <div class="field">
+            <label>Target</label>
+            <select id="notif-target">
+              <option value="all">📢 All Users</option>
+              {% for u in users %}
+              <option value="{{ u.username }}">{{ u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="notif-title" placeholder="Notification title">
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="notif-body" placeholder="Write your message..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="sendNotification()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── CHAT MODAL ── -->
+<div class="modal-overlay" id="chat-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="chat-modal-title">Chat History</h3>
+      <button class="modal-close-btn" onclick="closeModal('chat-modal')">×</button>
+    </div>
+    <div class="modal-body" id="chat-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('chat-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ANALYSIS MODAL ── -->
+<div class="modal-overlay" id="analysis-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="analysis-modal-title">AI Analysis</h3>
+      <button class="modal-close-btn" onclick="closeModal('analysis-modal')">×</button>
+    </div>
+    <div class="modal-body" id="analysis-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('analysis-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── BAN CONFIRM MODAL ── -->
+<div class="modal-overlay" id="ban-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Confirm Ban</h3>
+      <button class="modal-close-btn" onclick="closeModal('ban-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Type</label>
+        <input type="text" id="modal-ban-type" readonly>
+      </div>
+      <div class="field">
+        <label>Value</label>
+        <input type="text" id="modal-ban-value" readonly>
+      </div>
+      <div class="field">
+        <label>Reason</label>
+        <input type="text" id="modal-ban-reason" placeholder="Optional">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('ban-modal')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmModalBan()">Confirm Ban</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="toast"></div>
+
+<!-- MOBILE DRAWER -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<div class="mobile-drawer" id="mobile-drawer">
+  <div class="mobile-drawer-top">
+    <div class="mobile-drawer-brand">
+      <div class="sidebar-brand-icon">
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M34,29 L48,29 L51,49 L37,49 Z" fill="white"/>
+          <path d="M54,29 L63,29 Q74,29 74,39 Q74,49 63,49 L54,49 Z" fill="white"/>
+          <circle cx="42" cy="62" r="11" fill="white"/>
+          <polygon points="54,52 74,72 54,72" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sidebar-brand-name">Jarvis</div>
+        <div style="font-size:11px;color:var(--mid);">Admin Panel</div>
+      </div>
+    </div>
+    <button class="mobile-drawer-close" onclick="closeDrawer()">&#215;</button>
+  </div>
+  <nav class="mobile-drawer-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item" id="dnav-overview" onclick="navTo('overview')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" id="dnav-live" onclick="navTo('live')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+      Live Users
+    </button>
+    <div class="nav-section-label">Users</div>
+    <button class="nav-item" id="dnav-users" onclick="navTo('users')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      All Users
+    </button>
+    <button class="nav-item" id="dnav-profiles" onclick="navTo('profiles')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Profiles &amp; Chats
+    </button>
+    <button class="nav-item" id="dnav-bans" onclick="navTo('bans')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      Bans
+    </button>
+    <div class="nav-section-label">Tools</div>
+    <button class="nav-item" id="dnav-notify" onclick="navTo('notify')">
+      <svg viewBox="0 0 24 24"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+    </button>
+    <div style="padding:8px 8px 4px;">
+      <div class="theme-row" onclick="toggleTheme()">
+        <div style="display:flex;align-items:center;gap:11px;color:var(--mid);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark mode
+        </div>
+        <button class="toggle-pill" id="themeToggleMobile" onclick="event.stopPropagation();toggleTheme()"></button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-drawer-footer">
+    <a href="/admin/logout" class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log out
+    </a>
+  </div>
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" id="bnav-overview" onclick="navTo('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Home
+  </button>
+  <button class="bottom-nav-item" id="bnav-users" onclick="navTo('users')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Users
+  </button>
+  <button class="bottom-nav-item" id="bnav-profiles" onclick="navTo('profiles')">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Profiles
+  </button>
+  <button class="bottom-nav-item" id="bnav-bans" onclick="navTo('bans')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+    Bans
+  </button>
+  <button class="bottom-nav-item" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    More
+  </button>
+</nav>
+
+{% endif %}
+
+<script>
+// THEME
+function applyTheme(dark) {
+  document.body.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.querySelectorAll('.toggle-pill').forEach(p => p.classList.toggle('on', dark));
+  localStorage.setItem('adminTheme', dark ? 'dark' : 'light');
+}
+(function(){ applyTheme(localStorage.getItem('adminTheme') === 'dark'); })();
+function toggleTheme() { applyTheme(document.body.getAttribute('data-theme') !== 'dark'); }
+
+// DRAWER
+function openDrawer() {
+  document.getElementById('mobile-drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('mobile-drawer').classList.remove('open');
+  document.getElementById('drawer-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// NAV - unified function used by sidebar, drawer, bottom nav
+const sectionNames = { overview:'Dashboard', live:'Live Users', users:'All Users', profiles:'Profiles & Chats', bans:'Bans', notify:'Notifications' };
+
+function navTo(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  document.getElementById('page-title').textContent = sectionNames[id] || id;
+  // Sync all nav surfaces
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const d = document.getElementById('dnav-'+id);
+  if (d) d.classList.add('active');
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const b = document.getElementById('bnav-'+id);
+  if (b) b.classList.add('active');
+  closeDrawer();
+  if (id === 'live') loadLiveUsers();
+}
+
+// Wrapper for desktop sidebar (passes el for legacy compat, uses navTo internally)
+function nav(id, el) { navTo(id); }
+
+  if (id === 'live') loadLiveUsers();
+}
+
+// ── TOAST ──
+let _toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── MODAL ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── LIVE USERS ──
+async function loadLiveUsers() {
+  const el = document.getElementById('live-list');
+  el.innerHTML = '<div class="live-empty" style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="spinner"></div> Loading...</div>';
+  try {
+    const d = await (await fetch('/admin/live_users')).json();
+    document.getElementById('live-count').textContent = d.users.length;
+    if (!d.users.length) { el.innerHTML = '<div class="live-empty">No users online right now.</div>'; return; }
+    el.innerHTML = d.users.map(u => `
+      <div class="live-item">
+        <span class="live-item-user">${esc(u.username)}</span>
+        <span class="live-item-since">${esc(u.since)}</span>
+      </div>`).join('');
+  } catch { el.innerHTML = '<div class="live-empty" style="color:var(--red)">Failed to load.</div>'; }
+}
+setInterval(async () => {
+  try { const d = await (await fetch('/admin/live_users')).json(); document.getElementById('live-count').textContent = d.users.length; } catch {}
+}, 30000);
+
+// ── UNLOCK CHATS ──
+async function unlockChats() {
+  const code = document.getElementById('owner-code-input').value.trim();
+  if (!code) return toast('Enter owner code');
+  const d = await (await fetch('/admin/verify_code', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})})).json();
+  if (d.ok) { document.getElementById('unlock-banner').style.display = 'none'; toast('✓ Chats unlocked'); }
+  else toast('✗ Wrong owner code');
+}
+
+// ── VIEW CHATS ──
+async function viewChats(username) {
+  document.getElementById('chat-modal-title').textContent = username + ' — Chats';
+  document.getElementById('chat-modal-body').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div> Loading...</div>';
+  openModal('chat-modal');
+  try {
+    const d = await (await fetch('/admin/view_chats/'+username)).json();
+    if (d.error) { document.getElementById('chat-modal-body').innerHTML = `<div class="empty" style="color:var(--red)">${esc(d.error)}</div>`; return; }
+    if (!d.sessions?.length) { document.getElementById('chat-modal-body').innerHTML = '<div class="empty">No saved sessions.</div>'; return; }
+    let html = '';
+    d.sessions.forEach((s,i) => {
+      html += `<div class="session-block"><div class="session-label">Session ${i+1} &middot; ${esc(s.created_at)} &rarr; ${esc(s.updated_at)}</div>`;
+      s.messages.forEach(m => {
+        const isYou = m.sender === 'You';
+        const txt = (m.text||'').length > 400 ? m.text.slice(0,400)+'…' : (m.text||'');
+        html += `<div class="msg-row ${isYou?'user':''}"><div class="msg-bubble">${esc(txt)}</div></div>`;
+      });
+      html += '</div>';
+    });
+    document.getElementById('chat-modal-body').innerHTML = html;
+  } catch { document.getElementById('chat-modal-body').innerHTML = '<div class="empty" style="color:var(--red)">Failed to load.</div>'; }
+}
+
+// ── AI ANALYSIS ──
+async function analyseChats(username) {
+  document.getElementById('analysis-modal-title').textContent = username + ' — AI Analysis';
+  document.getElementById('analysis-modal-body').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div> Analysing...</div>';
+  openModal('analysis-modal');
+  try {
+    const d = await (await fetch('/admin/analyse_chats/'+username, {method:'POST'})).json();
+    if (d.error) { document.getElementById('analysis-modal-body').innerHTML = `<div class="empty" style="color:var(--red)">${esc(d.error)}</div>`; return; }
+    const r = d.report;
+    const flags = (r.risk_flags||[]).filter(Boolean);
+    document.getElementById('analysis-modal-body').innerHTML = `
+      <div class="analysis-field">
+        <div class="af-label">Personality</div>
+        <div class="af-val">${esc(r.personality_summary||'—')}</div>
+      </div>
+      <div class="analysis-field">
+        <div class="af-label">Sentiment</div>
+        <div class="af-val"><span class="tag tag-blue">${esc(r.sentiment||'—')}</span></div>
+      </div>
+      <div class="analysis-field">
+        <div class="af-label">Top Interests</div>
+        <div class="af-val" style="display:flex;flex-wrap:wrap;gap:5px;">${(r.top_interests||[]).map(t=>`<span class="tag tag-default">${esc(t)}</span>`).join('')||'—'}</div>
+      </div>
+      <div class="analysis-field">
+        <div class="af-label">Notable Topics</div>
+        <div class="af-val" style="display:flex;flex-wrap:wrap;gap:5px;">${(r.notable_topics||[]).map(t=>`<span class="tag tag-default">${esc(t)}</span>`).join('')||'—'}</div>
+      </div>
+      <div class="analysis-field">
+        <div class="af-label">Usage Pattern</div>
+        <div class="af-val">${esc(r.usage_pattern||'—')}</div>
+      </div>
+      ${flags.length?`<div class="analysis-field"><div class="af-label" style="color:var(--red)">⚠ Risk Flags</div>${flags.map(f=>`<div class="risk-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>${esc(f)}</div>`).join('')}</div>`:''}
+      <div class="analysis-field">
+        <div class="af-label">Recommendation</div>
+        <div class="af-val" style="color:var(--mid);font-style:italic;">${esc(r.recommendation||'—')}</div>
+      </div>`;
+  } catch { document.getElementById('analysis-modal-body').innerHTML = '<div class="empty" style="color:var(--red)">Analysis failed.</div>'; }
+}
+
+// ── DELETE CHATS ──
+async function deleteUserChats(username) {
+  if (!confirm(`Clear ALL chat sessions for "${username}"?`)) return;
+  const d = await (await fetch('/admin/delete_user_chats/'+username, {method:'POST'})).json();
+  toast(d.ok ? `✓ Chats cleared for ${username}` : 'Failed');
+}
+
+// ── BAN ──
+function openBanModal(type, value) {
+  document.getElementById('modal-ban-type').value = type;
+  document.getElementById('modal-ban-value').value = value;
+  document.getElementById('modal-ban-reason').value = '';
+  openModal('ban-modal');
+}
+async function confirmModalBan() {
+  await doBan(document.getElementById('modal-ban-type').value, document.getElementById('modal-ban-value').value, document.getElementById('modal-ban-reason').value.trim());
+  closeModal('ban-modal');
+}
+async function submitBan() {
+  const type = document.getElementById('ban-type').value;
+  const value = document.getElementById('ban-value').value.trim();
+  const reason = document.getElementById('ban-reason').value.trim();
+  if (!value) return toast('Enter a value');
+  await doBan(type, value, reason);
+  document.getElementById('ban-value').value = '';
+  document.getElementById('ban-reason').value = '';
+}
+async function doBan(type, value, reason) {
+  const d = await (await fetch('/admin/ban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,value,reason})})).json();
+  if (d.ok) { toast(`✓ Banned: ${value}`); addBanRow(type, value, reason); }
+  else toast(d.error || 'Ban failed');
+}
+function addBanRow(type, value, reason) {
+  const tbody = document.querySelector('#bans-table tbody');
+  const empty = tbody.querySelector('td[colspan]');
+  if (empty) empty.closest('tr').remove();
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="tag ${type==='ip'?'tag-amber':'tag-red'}">${esc(type)}</span></td>
+    <td style="font-weight:600;">${esc(value)}</td>
+    <td style="color:var(--mid);font-size:12px;">${esc(reason)||'—'}</td>
+    <td style="color:var(--mid);font-size:12px;">just now</td>
+    <td><button class="btn btn-success btn-sm" onclick="unban('${esc(value)}',this)">Unban</button></td>`;
+  tbody.prepend(tr);
+}
+async function unban(value, btn) {
+  if (!confirm(`Lift ban for "${value}"?`)) return;
+  const d = await (await fetch('/admin/unban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({value})})).json();
+  if (d.ok) { btn.closest('tr').remove(); toast(`✓ Unbanned: ${value}`); }
+  else toast(d.error || 'Failed');
+}
+
+// ── NOTIFY ──
+async function sendNotification() {
+  const target = document.getElementById('notif-target').value;
+  const title = document.getElementById('notif-title').value.trim();
+  const body = document.getElementById('notif-body').value.trim();
+  if (!title || !body) return toast('Title and message required');
+  const d = await (await fetch('/admin/send_notification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target,title,body})})).json();
+  if (d.ok) { toast(`✓ ${d.message}`); document.getElementById('notif-title').value=''; document.getElementById('notif-body').value=''; }
+  else toast(d.error || 'Failed');
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// init
+loadLiveUsers();
+</script>
+</body>
+</html>
