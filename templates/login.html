@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Jarvis AI - Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light by default */
+            --bg-primary: #fbfbfa;
+            --text-primary: #181816;
+            --text-secondary: #706f6c;
+            --ui-accent: #181816;
+            --ui-subtle: #f0f0ee;
+            --radius-pill: 9999px;
+            --transition-smooth: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
+        /* Dark mode — when jarvis-dark key is present in localStorage */
+        body.dark-mode {
+            --bg-primary: #0a0a0a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #8a8a8a;
+            --ui-accent: #f5f5f5;
+            --ui-subtle: #1a1a1a;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            transition: background-color 0.25s, color 0.25s;
+            padding: 20px;
+        }
+
+        .header-nav {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            z-index: 10;
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+
+        .auth-card {
+            width: 100%;
+            max-width: 360px;
+            animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            z-index: 5;
+        }
+
+        .desktop-form-layout { display: none; }
+        .mobile-form-layout { display: flex; flex-direction: column; }
+
+        @media (min-width: 768px) {
+            .mobile-form-layout { display: none; }
+            .desktop-form-layout { display: flex; flex-direction: column; }
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .auth-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .auth-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-header p a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            padding-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .d-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--ui-subtle);
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            font-size: 14.5px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color .15s, background .15s;
+        }
+
+        .d-input.has-eye {
+            padding-right: 42px;
+        }
+
+        .d-input:focus {
+            border-color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .eye-btn {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center; z-index: 3;
+            transition: color 0.2s;
+            padding: 4px;
+        }
+        .eye-btn:hover { color: var(--text-primary); }
+
+        .input-overlay-border {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+            z-index: 2;
+        }
+
+        .input-wrapper.valid .input-overlay-border {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        .input-wrapper.invalid .input-overlay-border {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+
+        .input-wrapper.checking .input-overlay-border {
+            border-color: var(--warning-color);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+            animation: pulseCheck 1s infinite;
+        }
+
+        @keyframes pulseCheck {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .d-action-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 12px;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .d-action-btn:hover { opacity: .88; }
+        .d-action-btn:active { transform: scale(.98); }
+        .d-action-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        [data-theme="light"] .d-action-btn .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.15);
+            border-top-color: var(--bg-primary);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #pageTransition {
+            position: fixed; inset: 0; background: var(--bg-primary);
+            z-index: 9999; pointer-events: none; opacity: 0;
+        }
+
+        .flash-msg {
+            font-size: 13px; color: var(--error-color);
+            padding: 4px 2px; font-weight: 500;
+        }
+    </style>
+    <script>
+        // Sync theme with chat/landing: jarvis-dark key present = dark, absent = light
+        (function() {
+            if (localStorage.getItem('jarvis-dark')) {
+                document.body.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <div id="pageTransition"></div>
+
+    <header class="header-nav">
+        <div class="brand-title">Jarvis AI</div>
+    </header>
+
+    <main class="auth-card">
+        <div class="auth-header">
+            <h1>Welcome back</h1>
+            <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+
+        {% if error %}
+            <div class="flash-msg">{{ error }}</div>
+        {% endif %}
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-msg">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form id="loginForm" class="mobile-form-layout" action="/login" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <input type="text" id="username" name="username" class="d-input" placeholder="Enter username" required autocomplete="off">
+                    <div class="input-overlay-border"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="loginPwd">Password</label>
+                <div class="input-wrapper" id="passWrapperMobile">
+                    <input type="password" id="loginPwd" name="password" class="d-input has-eye" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="eye-btn" onclick="toggleEye('loginPwd', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    <div class="input-overlay-border"></div>
+                </div>
+            </div>
+            <button type="submit" class="d-action-btn" id="loginBtn">
+                <span class="spinner" id="loginSpinner"></span>
+                <span id="loginBtnText">Sign In</span>
+            </button>
+        </form>
+
+        <form id="loginFormDesk" class="desktop-form-layout" action="/login" method="POST">
+            <div class="form-group">
+                <label for="usernameDesk">Username</label>
+                <div class="input-wrapper">
+                    <input type="text" id="usernameDesk" name="username" class="d-input" placeholder="Enter username" required autocomplete="off">
+                    <div class="input-overlay-border"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="loginPwdDesk">Password</label>
+                <div class="input-wrapper" id="passWrapperDesk">
+                    <input type="password" id="loginPwdDesk" name="password" class="d-input has-eye" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="eye-btn" onclick="toggleEye('loginPwdDesk', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    <div class="input-overlay-border"></div>
+                </div>
+            </div>
+            <button type="submit" class="d-action-btn" id="loginBtnDesk">
+                <span class="spinner" id="loginSpinnerDesk"></span>
+                <span id="loginBtnTextDesk">Sign In</span>
+            </button>
+        </form>
+    </main>
+
+    <script>
+        // Theme sync — listen for changes from chat/landing (jarvis-dark key)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'jarvis-dark') {
+                if (e.newValue) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+            }
+        });
+
+        // Eye Toggle
+        function toggleEye(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('svg');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+            } else {
+                input.type = 'password';
+                icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+            }
+        }
+
+
+        // Form Submit AJAX Login Workflow Interceptor
+        function bindLoginCheck(formId, pwdId, btnId, btnTextId, spinnerId) {
+            const form = document.getElementById(formId);
+            const pwdInput = document.getElementById(pwdId);
+            if (!form || !pwdInput) return;
+            const wrap = pwdInput.closest('.input-wrapper');
+            const btn = document.getElementById(btnId);
+            const btnText = document.getElementById(btnTextId);
+            const spinner = document.getElementById(spinnerId);
+
+            function clearState() { wrap.classList.remove('valid', 'invalid', 'checking'); }
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = form.querySelector('input[name="username"]').value.trim();
+                const password = pwdInput.value;
+                if (!username || !password) { form.submit(); return; }
+
+                clearState();
+                wrap.classList.add('checking');
+                btn.disabled = true;
+                btnText.textContent = 'Checking...';
+                spinner.style.display = 'block';
+
+                fetch('/check_password', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({username, password})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    clearState();
+                    if (data.result === 'correct') {
+                        wrap.classList.add('valid');
+                        btnText.textContent = 'Signing in...';
+                        setTimeout(() => form.submit(), 300);
+                    } else {
+                        wrap.classList.add('invalid');
+                        btn.disabled = false;
+                        btnText.textContent = 'Sign In';
+                        spinner.style.display = 'none';
+                    }
+                })
+                .catch(() => {
+                    clearState();
+                    btn.disabled = false;
+                    btnText.textContent = 'Sign In';
+                    spinner.style.display = 'none';
+                    form.submit();
+                });
+            });
+        }
+        bindLoginCheck('loginForm', 'loginPwd', 'loginBtn', 'loginBtnText', 'loginSpinner');
+        bindLoginCheck('loginFormDesk', 'loginPwdDesk', 'loginBtnDesk', 'loginBtnTextDesk', 'loginSpinnerDesk');
+
+        /* Page Motion Transition Controllers */
+        (function(){
+            const ov = document.getElementById('pageTransition');
+            // Already starts at opacity:0 via CSS — no load flash
+            function goTo(url) {
+                ov.style.transition = 'opacity 0.4s cubic-bezier(0.4,0,0.2,1)';
+                ov.style.opacity = '1';
+                ov.style.pointerEvents = 'all';
+                setTimeout(() => location.href = url, 420);
+            }
+            window.goTo = goTo;
+            document.addEventListener('click', function(e) {
+                const a = e.target.closest('a[href]');
+                if(!a) return;
+                const href = a.getAttribute('href');
+                if(!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto')) return;
+                e.preventDefault();
+                goTo(href);
+            });
+            // No submit listener — avoids the dimming flash on button tap
+        })();
+    </script>
+</body>
+</html>
