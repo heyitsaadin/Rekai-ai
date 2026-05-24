@@ -36,11 +36,13 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 
 # Fix #1: BAD_WORDS loaded from env so they're not public in source code.
 # Set BAD_WORDS_EXTRA env var as comma-separated words to add more at runtime.
-_DEFAULT_BAD_WORDS = ["hate","kill","stupid","idiot","dumb","ugly","trash",
-                      "shit","fuck","bastard","die","loser","suck","worst",
-                      "bitch","dick","ass","motherfucker","fucker","looser","gay"]
-_extra = os.environ.get("BAD_WORDS_EXTRA", "")
-BAD_WORDS = _DEFAULT_BAD_WORDS + [w.strip() for w in _extra.split(",") if w.strip()]
+_malayalam = os.environ.get("MALAYALAM_BAD_WORDS", "")
+_english   = os.environ.get("ENGLISH_BAD_WORDS", "")
+
+BAD_WORDS = (
+    [w.strip() for w in _malayalam.split(",") if w.strip()] +
+    [w.strip() for w in _english.split(",")   if w.strip()]
+)
 
 TIME_TRIGGERS = [
     "what time is it", "what's the time", "whats the time",
