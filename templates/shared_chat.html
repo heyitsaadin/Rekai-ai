@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ title }} — Jarvis AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="{{ title }} — Jarvis AI">
+    <meta property="og:description" content="Shared conversation with Jarvis AI">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f4f4f2;
+            --bg-card:    #ffffff;
+            --text-primary: #1a1a18;
+            --text-secondary: #706f6c;
+            --user-bubble: #e8e8e6;
+            --ai-bubble:   #ffffff;
+            --border:      rgba(0,0,0,0.07);
+            --accent:      #1a1a18;
+            --red:         #ef4444;
+            --code-bg:     #1e1e2e;
+            --code-fg:     #cdd6f4;
+            --radius-msg:  18px;
+            --shadow-card: 0 2px 24px rgba(0,0,0,0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary:   #0a0a0a;
+                --bg-card:      #141414;
+                --text-primary: #f0f0ee;
+                --text-secondary: #888884;
+                --user-bubble:  #1f1f1f;
+                --ai-bubble:    #1a1a1a;
+                --border:       rgba(255,255,255,0.07);
+                --accent:       #f0f0ee;
+                --shadow-card:  0 2px 24px rgba(0,0,0,0.4);
+            }
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box;
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+            -webkit-font-smoothing:antialiased; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ── Top bar ── */
+        .top-bar {
+            width: 100%;
+            max-width: 720px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .top-bar-logo {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .top-bar-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: var(--user-bubble);
+            padding: 3px 9px;
+            border-radius: 99px;
+            margin-left: 2px;
+        }
+
+        .top-bar-copy {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--user-bubble);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 7px 14px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .top-bar-copy:active { opacity: 0.6; }
+        .top-bar-copy svg { flex-shrink: 0; }
+
+        /* ── Chat card ── */
+        .chat-card {
+            width: 100%;
+            max-width: 720px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            margin: 20px 16px;
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            flex: 1;
+        }
+
+        /* ── Chat header (author strip) ── */
+        .chat-header {
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--bg-card);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .chat-meta { flex: 1; min-width: 0; }
+
+        .chat-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-byline {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .view-only-pill {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            background: var(--user-bubble);
+            border-radius: 99px;
+            padding: 4px 10px;
+            flex-shrink: 0;
+        }
+
+        /* ── Messages ── */
+        .message-stream {
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 26px;
+            animation: fadeUp 0.32s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .message-row.user { align-items: flex-end; }
+        .message-row.ai   { align-items: flex-start; }
+
+        .meta-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .message-row.user .meta-label { text-align: right; }
+
+        .message-text {
+            max-width: 80%;
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .message-row.user .message-text {
+            background: var(--user-bubble);
+            padding: 10px 15px;
+            border-radius: var(--radius-msg) var(--radius-msg) 4px var(--radius-msg);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message-row.ai .message-text {
+            max-width: 100%;
+            word-break: break-word;
+        }
+
+        /* markdown inside AI bubbles */
+        .message-text p  { margin-bottom: 10px; }
+        .message-text p:last-child { margin-bottom: 0; }
+        .message-text ul, .message-text ol { padding-left: 20px; margin-bottom: 10px; }
+        .message-text li { margin-bottom: 4px; }
+        .message-text strong { font-weight: 700; }
+        .message-text em { font-style: italic; }
+        .message-text h1,.message-text h2,.message-text h3 { margin: 14px 0 6px; font-weight: 700; }
+        .message-text code:not(pre code) {
+            background: var(--user-bubble);
+            padding: 2px 6px; border-radius: 5px;
+            font-family: "SF Mono", Menlo, monospace; font-size: 13px;
+        }
+        .message-text pre {
+            background: var(--code-bg);
+            color: var(--code-fg);
+            border-radius: 12px;
+            padding: 14px 16px;
+            overflow-x: auto;
+            font-family: "SF Mono", Menlo, monospace;
+            font-size: 13px;
+            line-height: 1.55;
+            margin: 10px 0;
+            position: relative;
+        }
+        .message-text pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+        /* Copy button on code blocks */
+        .copy-btn {
+            position: absolute; top: 8px; right: 10px;
+            background: rgba(255,255,255,0.12); color: #cdd6f4;
+            border: none; border-radius: 7px;
+            padding: 4px 10px; font-size: 11px; font-weight: 600;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.22); }
+
+        /* ── Generated / uploaded images ── */
+        .jarvis-img-wrap {
+            margin: 8px 0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--user-bubble);
+            max-width: 340px;
+        }
+
+        .jarvis-img {
+            display: block;
+            width: 100%;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .jarvis-img-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            gap: 8px;
+        }
+
+        .jarvis-img-caption {
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Hide download button in shared view */
+        .jarvis-img-dl { display: none !important; }
+
+        /* ── Uploaded image indicator ── */
+        .uploaded-img-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--user-bubble);
+            padding: 5px 10px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        /* ── Footer info strip ── */
+        .chat-footer {
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-footer-logo {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: var(--text-secondary);
+        }
+
+        .chat-footer-dot {
+            width: 3px; height: 3px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+        }
+
+        .chat-footer-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ── CTA button ── */
+        .cta-bar {
+            width: 100%;
+            max-width: 720px;
+            padding: 0 16px 32px;
+        }
+
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: var(--bg-card);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .cta-btn:active { opacity: 0.8; }
+
+        /* ── Toast ── */
+        #copyToast {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--text-primary); color: var(--bg-card);
+            padding: 10px 18px; border-radius: 12px;
+            font-size: 13px; font-weight: 600;
+            z-index: 9999; opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+            display: flex; align-items: center; gap: 7px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* ── Skeleton for images loading ── */
+        .img-skeleton {
+            width: 100%; aspect-ratio: 1;
+            background: linear-gradient(90deg, var(--user-bubble) 25%, var(--border) 50%, var(--user-bubble) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 14px 14px 0 0;
+        }
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<nav class="top-bar">
+    <a href="/landing" class="top-bar-logo">JARVIS AI</a>
+    <span class="top-bar-badge">Shared</span>
+    <button class="top-bar-copy" onclick="copyLink()" aria-label="Copy link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy link
+    </button>
+</nav>
+
+<!-- Chat card -->
+<div class="chat-card">
+
+    <!-- Author / title header -->
+    <div class="chat-header">
+        <div class="chat-avatar" id="avatarEl"></div>
+        <div class="chat-meta">
+            <div class="chat-title" id="titleEl"></div>
+            <div class="chat-byline" id="bylineEl"></div>
+        </div>
+        <span class="view-only-pill">View only</span>
+    </div>
+
+    <!-- Messages -->
+    <div class="message-stream" id="messageStream"></div>
+
+    <!-- Footer -->
+    <div class="chat-footer">
+        <span class="chat-footer-logo">JARVIS AI</span>
+        <span class="chat-footer-dot"></span>
+        <span class="chat-footer-date" id="sharedAtEl"></span>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-bar">
+    <a href="/landing" class="cta-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Start your own conversation
+    </a>
+</div>
+
+<!-- Toast -->
+<div id="copyToast">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Link copied!
+</div>
+
+<!-- Data from server (no Jinja in JS to avoid XSS) -->
+<script id="sharedData" type="application/json">
+{
+    "username": {{ username | tojson }},
+    "title":    {{ title | tojson }},
+    "sharedAt": {{ shared_at | tojson }},
+    "shareUrl": {{ (request.url) | tojson }}
+}
+</script>
+<script id="msgData" type="application/json">{{ messages | tojson }}</script>
+
+<script>
+{% raw %}
+    marked.setOptions({ breaks: true, gfm: true });
+
+    const data     = JSON.parse(document.getElementById('sharedData').textContent);
+    const messages = JSON.parse(document.getElementById('msgData').textContent);
+
+    // Populate header
+    document.getElementById('avatarEl').textContent   = data.username ? data.username[0].toUpperCase() : '?';
+    document.getElementById('titleEl').textContent    = data.title || 'Shared conversation';
+    document.getElementById('bylineEl').textContent   = data.username + ' · ' + data.sharedAt;
+    document.getElementById('sharedAtEl').textContent = data.sharedAt;
+    document.title = (data.title || 'Shared chat') + ' — Jarvis AI';
+
+    // ── Copy buttons on code blocks ──
+    function addCopyBtns(el) {
+        el.querySelectorAll('pre').forEach(pre => {
+            if (pre.querySelector('.copy-btn')) return;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn'; btn.textContent = 'Copy';
+            btn.onclick = () => {
+                navigator.clipboard.writeText(pre.querySelector('code')?.innerText || pre.innerText);
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            };
+            pre.appendChild(btn);
+        });
+    }
+
+    // ── Build a message bubble ──
+    function makeBubble(msg) {
+        const row = document.createElement('div');
+        row.className = 'message-row ' + (msg.sender === 'You' ? 'user' : 'ai');
+
+        const label = document.createElement('div');
+        label.className = 'meta-label';
+        label.textContent = msg.sender === 'You' ? data.username || 'User' : 'Jarvis';
+        row.appendChild(label);
+
+        const text = document.createElement('div');
+        text.className = 'message-text';
+
+        if (msg.sender === 'You') {
+            // Check if it's an uploaded-image label
+            const uploadMatch = msg.text.match(/^\[(image|2 images) uploaded\](.*)?$/i);
+            if (uploadMatch) {
+                const badge = document.createElement('div');
+                badge.className = 'uploaded-img-badge';
+                badge.innerHTML = `
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    ${msg.text}`;
+                row.appendChild(badge);
+            } else {
+                text.textContent = msg.text;
+                row.appendChild(text);
+            }
+        } else {
+            let rawText = msg.text;
+            // Strip any leftover internal markers
+            if (rawText.startsWith('[IMAGE ANALYSIS RESULT]\n')) {
+                rawText = rawText.slice('[IMAGE ANALYSIS RESULT]\n'.length);
+            }
+
+            if (rawText.includes('jarvis-img-wrap')) {
+                text.innerHTML = rawText;
+
+                // Show images with skeleton loader; hide download button
+                text.querySelectorAll('.jarvis-img').forEach(img => {
+                    if (!img.classList.contains('loaded')) {
+                        const skel = document.createElement('div');
+                        skel.className = 'img-skeleton';
+                        img.parentNode.insertBefore(skel, img);
+                        img.style.display = 'none';
+                        img.addEventListener('load', () => {
+                            skel.remove();
+                            img.style.display = '';
+                            img.classList.add('loaded');
+                        });
+                        img.addEventListener('error', () => {
+                            skel.remove();
+                            img.style.display = '';
+                        });
+                    }
+                });
+
+                row.appendChild(text);
+                return row;
+            }
+
+            let html = marked.parse(rawText);
+            const stripped = html.trim();
+            const singleP = stripped.match(/^<p>([\s\S]*?)<\/p>$/);
+            if (singleP && !stripped.includes('</p><')) html = singleP[1];
+            text.innerHTML = html;
+            addCopyBtns(text);
+            row.appendChild(text);
+        }
+
+        return row;
+    }
+
+    // ── Render all messages ──
+    const stream = document.getElementById('messageStream');
+    messages.forEach((msg, i) => {
+        const bubble = makeBubble(msg);
+        bubble.style.animationDelay = (i * 30) + 'ms';
+        stream.appendChild(bubble);
+    });
+
+    // ── Copy link ──
+    function copyLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).catch(() => {});
+        const toast = document.getElementById('copyToast');
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(20px)';
+        }, 2500);
+    }
+{% endraw %}
+</script>
+</body>
+</html>
