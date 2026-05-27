@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Jarvis AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-primary: #0a0a0a;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-bright: rgba(255,255,255,0.18);
+      --text: #f5f5f5;
+      --text-primary: #f5f5f5;
+      --text-dim: rgba(245,245,245,0.4);
+      --text-mid: rgba(245,245,245,0.65);
+      --text-secondary: #8a8a8a;
+      --ui-subtle: #1a1a1a;
+      --tan: #f5e3b0;
+      --tan-dim: rgba(245,227,176,0.1);
+      --red: #ef4444;
+      --green: #10b981;
+      --sidebar-width: 290px;
+    }
+
+    [data-theme="light"] {
+      --bg: #fbfbfa;
+      --bg-primary: #fbfbfa;
+      --surface: rgba(0,0,0,0.03);
+      --surface2: rgba(0,0,0,0.06);
+      --border: rgba(0,0,0,0.08);
+      --border-bright: rgba(0,0,0,0.18);
+      --text: #181816;
+      --text-primary: #181816;
+      --text-dim: rgba(24,24,22,0.4);
+      --text-mid: rgba(24,24,22,0.65);
+      --text-secondary: #706f6c;
+      --ui-subtle: #f0f0ee;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body {
+      width:100%; height:100dvh;
+      background:var(--bg); color:var(--text);
+      font-family:'DM Sans',sans-serif;
+      overflow:hidden; position:relative;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* ── Grain ── */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      opacity:0.35;
+    }
+
+    /* ── Static background — mesh gradient, no animation, no lag ── */
+    .bg-mesh {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(245,227,176,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,185,129,0.03) 0%, transparent 55%);
+      transition: opacity 0.4s;
+    }
+    [data-theme="light"] .bg-mesh {
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(245,227,176,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(99,102,241,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 55%);
+    }
+
+    /* ── Thin horizontal line accents ── */
+    .bg-lines {
+      position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; opacity:0.04;
+    }
+    .bg-lines::before {
+      content:''; position:absolute; inset:0;
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.5) 60px);
+    }
+    [data-theme="light"] .bg-lines { opacity:0.03; }
+
+    /* ══════════════════════════════════
+       HAMBURGER — top right
+    ══════════════════════════════════ */
+    .ham-wrap {
+      position:fixed; top:16px; right:16px; z-index:155;
+      opacity:0; animation:fadeIn 0.5s 0.6s ease forwards;
+      transition: opacity 0.2s, pointer-events 0s;
+    }
+    /* Hide hamburger entirely when menu is open — close btn inside panel takes over */
+    body.menu-open .ham-wrap {
+      opacity:0 !important;
+      pointer-events:none !important;
+    }
+    .ham-btn {
+      width:40px; height:40px; border-radius:12px;
+      background:rgba(10,10,10,0.72); border:1px solid var(--border);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:5px; cursor:pointer; position:relative; overflow:hidden;
+      transition:border-color 0.2s, background 0.2s;
+    }
+    [data-theme="light"] .ham-btn { background:rgba(255,255,255,0.72); border-color:rgba(0,0,0,0.1); }
+    .ham-btn:hover { border-color:var(--border-bright); }
+    .ham-btn span {
+      display:block; width:18px; height:2px; border-radius:2px;
+      background:var(--text); pointer-events:none;
+      transition:transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s, width 0.2s;
+    }
+
+    /* ══════════════════════════════════
+       FULL-SCREEN MENU OVERLAY
+       — same structure as chat.html sidebar
+       — but full-width, full-height cover
+    ══════════════════════════════════ */
+    /* Full-screen menu panel — slides in from right */
+    .menu-panel {
+      position:fixed; top:0; right:-100%;
+      width:100%; height:100%;
+      background:var(--bg-primary);
+      z-index:160;
+      display:flex; flex-direction:column;
+      transition:right 0.35s cubic-bezier(0.16,1,0.3,1);
+      overflow:hidden;
+    }
+    .menu-panel.active { right:0; }
+
+    /* Header row */
+    .menu-header {
+      display:flex; align-items:center; justify-content:flex-end;
+      padding:16px 20px 10px;
+      border-bottom:1px solid var(--border);
+      flex-shrink:0;
+      max-width:520px; width:100%; margin:0 auto; align-self:stretch;
+      /* stretch across full width for border but keep content centered */
+    }
+    /* wrapper to keep header border full-width */
+    .menu-header-wrap {
+      border-bottom:1px solid var(--border);
+      flex-shrink:0;
+      display:flex; justify-content:flex-end;
+      padding:16px 20px 12px;
+    }
+    .menu-close {
+      width:36px; height:36px; border-radius:50%; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-secondary); transition:background 0.15s;
+      background:var(--ui-subtle); border:none;
+    }
+    .menu-close:hover { background:var(--surface2); }
+    .menu-close svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; }
+
+    /* Drawer pages — full-screen, content centered */
+    .drawer-pages { flex:1; display:flex; overflow:hidden; position:relative; }
+    .drawer-page {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center;
+      overflow-y:auto; padding:16px 20px;
+      transform:translateX(0);
+      transition:transform 0.32s cubic-bezier(0.22,1,0.36,1);
+    }
+    /* All direct children constrained and centered */
+    .drawer-page > * { width:100%; max-width:460px; flex-shrink:0; }
+    .drawer-page::-webkit-scrollbar { display:none; }
+    .drawer-page.slide-out { transform:translateX(-100%); }
+    .drawer-page.slide-in  { transform:translateX(100%); }
+
+    /* Profile block at top of main menu page */
+    .menu-profile {
+      display:flex; align-items:center; gap:14px;
+      background:var(--ui-subtle);
+      border-radius:14px; padding:14px 16px;
+      margin:2px 0 14px;
+      border:1px solid var(--border);
+    }
+    .menu-avatar {
+      width:42px; height:42px; border-radius:50%;
+      background:var(--tan); flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:17px; font-weight:800; color:#374151; position:relative;
+    }
+    .menu-status-dot {
+      width:10px; height:10px; border-radius:50%; background:var(--green);
+      position:absolute; bottom:0; right:0;
+      border:2px solid var(--bg-primary);
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}70%{box-shadow:0 0 0 5px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);} }
+    .menu-profile-info {}
+    .menu-uname { font-size:14px; font-weight:700; color:var(--text); }
+    .menu-role  { font-size:11px; color:var(--text-secondary); margin-top:1px; }
+
+    /* d-item rows — identical to chat.html */
+    .d-item {
+      display:flex; align-items:center; gap:12px;
+      padding:11px 10px; border-radius:10px;
+      font-size:14px; color:var(--text);
+      text-decoration:none; cursor:pointer;
+      border:none; background:none; width:100%; text-align:left;
+      transition:background 0.15s;
+      font-family:'DM Sans',sans-serif;
+    }
+    .d-item:hover { background:var(--ui-subtle); }
+    .d-icon { width:18px; height:18px; flex-shrink:0; stroke:var(--text-secondary); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .d-item.new-chat { font-weight:600; }
+    .d-item.new-chat .d-icon { stroke:var(--text); }
+    .d-divider { border:none; border-top:1px solid var(--border); margin:5px 0; }
+
+    /* Dark mode toggle row */
+    .d-toggle-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:11px 10px; border-radius:10px;
+      font-size:14px; color:var(--text);
+      cursor:pointer; transition:background 0.15s;
+    }
+    .d-toggle-row:hover { background:var(--ui-subtle); }
+    .d-toggle-left { display:flex; align-items:center; gap:12px; }
+    .toggle-pill {
+      width:36px; height:20px; border-radius:10px;
+      background:var(--ui-subtle); border:none; cursor:pointer;
+      position:relative; transition:background 0.2s; flex-shrink:0;
+    }
+    .toggle-pill::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:16px; height:16px; border-radius:50%;
+      background:#fff; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-pill.on { background:var(--text); }
+    .toggle-pill.on::after { transform:translateX(16px); }
+
+    /* Chevron arrow inline */
+    .d-chevron { margin-left:auto; width:14px; height:14px; stroke:var(--text-secondary); fill:none; stroke-width:2; stroke-linecap:round; flex-shrink:0; }
+
+    /* Section label */
+    .d-section-label {
+      font-size:10px; font-weight:700; letter-spacing:1.2px;
+      color:var(--text-secondary); padding:0 10px; margin:2px 0 8px;
+    }
+
+    /* Form inputs */
+    .d-form-group { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
+    .d-input {
+      width:100%; padding:12px 14px;
+      background:var(--ui-subtle); border:1.5px solid transparent;
+      border-radius:12px; font-size:14px; color:var(--text);
+      font-family:'DM Sans',sans-serif; outline:none;
+      transition:border-color 0.15s, background 0.15s;
+    }
+    .d-input:focus { border-color:var(--text); background:var(--bg); }
+    .d-input::placeholder { color:var(--text-secondary); }
+    .d-form-msg { font-size:12px; padding:0 2px; min-height:14px; color:var(--text-secondary); transition:color 0.15s; }
+    .d-form-msg.ok  { color:#10b981; }
+    .d-form-msg.err { color:#ef4444; }
+
+    .d-action-btn {
+      width:100%; padding:13px;
+      background:var(--text); color:var(--bg);
+      border:none; border-radius:12px; font-size:14px; font-weight:700;
+      cursor:pointer; transition:opacity 0.15s, transform 0.1s;
+      font-family:'DM Sans',sans-serif;
+    }
+    .d-action-btn:hover   { opacity:0.85; }
+    .d-action-btn:active  { transform:scale(0.98); }
+    .d-action-btn.danger  { background:#ef4444; color:#fff; }
+    .d-action-btn:disabled { opacity:0.5; pointer-events:none; }
+
+    /* Back button */
+    .d-back {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:10px;
+      font-size:13px; font-weight:600; color:var(--text-secondary);
+      border:none; background:none; cursor:pointer;
+      margin-bottom:6px; width:100%; text-align:left;
+      transition:background 0.15s; font-family:'DM Sans',sans-serif;
+    }
+    .d-back:hover { background:var(--ui-subtle); color:var(--text); }
+
+    /* Danger items */
+    .d-item.danger { color:var(--red); }
+    .d-item.danger .d-icon { stroke:var(--red); }
+    .d-item.danger:hover { background:#fee2e2; }
+    [data-theme="dark"] .d-item.danger:hover { background:#2a1010; }
+
+    /* Danger card */
+    .d-danger-card {
+      background:#fff0f0; border:1.5px solid #fca5a5;
+      border-radius:14px; padding:16px; margin-bottom:8px;
+      display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
+    }
+    [data-theme="dark"] .d-danger-card { background:#1f0a0a; border-color:#7f1d1d; }
+    .d-danger-card p { font-size:13px; color:#b91c1c; line-height:1.55; }
+    [data-theme="dark"] .d-danger-card p { color:#f87171; }
+
+    /* Settings user card */
+    .d-settings-user-card {
+      display:flex; align-items:center; gap:14px;
+      background:var(--ui-subtle); border-radius:14px;
+      padding:14px 16px; margin:2px 0 14px;
+      border:1px solid var(--border);
+    }
+    .d-settings-avatar {
+      width:42px; height:42px; border-radius:50%;
+      background:var(--tan); display:flex; align-items:center; justify-content:center;
+      font-size:17px; font-weight:800; color:#374151; flex-shrink:0;
+    }
+    .d-settings-uname { font-size:14px; font-weight:700; color:var(--text); }
+    .d-settings-role  { font-size:11px; color:var(--text-secondary); margin-top:1px; }
+
+    /* Chat list */
+    .d-chat-list { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
+    .d-chat-card {
+      display:flex; align-items:flex-start; gap:10px;
+      background:var(--ui-subtle); border:1px solid var(--border);
+      border-radius:12px; padding:10px 12px; transition:background 0.15s;
+    }
+    .d-chat-card:hover { background:var(--surface2); }
+    .d-chat-card a.d-chat-link { flex:1; min-width:0; text-decoration:none; overflow:hidden; line-height:1.4; }
+    .d-chat-link-title { display:block; font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .d-chat-link-title.active { font-weight:700; }
+    .d-chat-link-title.active::before { content:'● '; color:#10b981; font-size:9px; vertical-align:middle; }
+    .d-chat-link-date { display:block; font-size:10px; color:var(--text-secondary); margin-top:3px; }
+    .d-chat-del {
+      width:28px; height:28px; border-radius:8px;
+      background:#fee2e2; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; color:var(--red); margin-top:1px;
+      transition:background 0.15s, transform 0.1s;
+    }
+    .d-chat-del:hover { background:#fca5a5; transform:scale(1.08); }
+    [data-theme="dark"] .d-chat-del { background:#2a1010; }
+    [data-theme="dark"] .d-chat-del:hover { background:#3d1515; }
+    .d-empty { font-size:12px; color:var(--text-secondary); padding:12px 4px; text-align:center; }
+
+    .d-chats-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:8px; flex-shrink:0; min-height:36px;
+    }
+    .d-chats-header .d-back { margin-bottom:0; flex-shrink:0; }
+    .d-clear-btn {
+      display:flex; align-items:center; gap:5px;
+      background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2);
+      border-radius:8px; padding:6px 10px;
+      font-size:11px; font-weight:700; color:var(--red);
+      cursor:pointer; transition:background 0.15s; flex-shrink:0;
+    }
+    .d-clear-btn:hover { background:rgba(239,68,68,0.18); }
+
+    /* Info card */
+    .d-card {
+      background:var(--ui-subtle); border-radius:14px;
+      padding:18px 16px; margin:4px 0 10px; border:1px solid var(--border);
+    }
+    .d-card-icon {
+      width:42px; height:42px; background:var(--tan); border-radius:12px;
+      display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+    }
+    .d-card h3    { font-size:15px; font-weight:800; color:var(--text); margin-bottom:2px; }
+    .d-card .ver  { font-size:10px; color:var(--text-secondary); letter-spacing:1px; margin-bottom:12px; }
+    .d-card p     { font-size:12.5px; color:var(--text-secondary); line-height:1.6; margin-bottom:6px; }
+    .d-card .tag  { font-size:10px; color:var(--text-secondary); letter-spacing:0.5px; margin-top:10px; }
+    .d-card .tag span { color:var(--text); font-weight:700; }
+
+    /* Drawer footer */
+    /* The outer wrapper div handles the full-width border + centering */
+    .drawer-footer {
+      width:100%; max-width:460px;
+      padding:10px 20px 18px;
+    }
+    .drawer-user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; }
+    .drawer-avatar {
+      width:34px; height:34px; border-radius:50%;
+      background:var(--tan);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800; color:#374151; flex-shrink:0;
+    }
+    .drawer-uname { font-size:13px; font-weight:600; color:var(--text); }
+    .drawer-role  { font-size:10px; color:var(--text-secondary); letter-spacing:0.4px; }
+
+    /* Logout spinner */
+    @keyframes logoutSpin { to { transform:rotate(360deg); } }
+    .logout-spinner {
+      display:none; width:13px; height:13px;
+      border:2px solid rgba(239,68,68,0.25);
+      border-top-color:var(--red); border-radius:50%;
+      animation:logoutSpin 0.7s linear infinite; flex-shrink:0;
+    }
+    .d-item.danger.loading { pointer-events:none; opacity:0.65; }
+    .d-item.danger.loading .logout-spinner { display:inline-block; }
+
+    /* ══════════════════════════════════
+       SHELL / HERO
+    ══════════════════════════════════ */
+    .shell {
+      position:relative; z-index:10;
+      width:100%; height:100dvh;
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center;
+    }
+
+    .hero {
+      display:flex; flex-direction:column; align-items:center;
+      padding:0 24px; text-align:center;
+    }
+
+    .hero-title {
+      font-family:'Barlow Condensed', sans-serif;
+      font-weight:900;
+      font-size:clamp(88px, 22vw, 180px);
+      line-height:0.88;
+      color:var(--text);
+      letter-spacing:-0.02em;
+      text-transform:uppercase;
+      margin-bottom:18px;
+      opacity:0; animation:fadeUp 0.7s 0.15s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    .hero-sub {
+      font-size:13px; color:var(--text-dim); max-width:300px;
+      line-height:1.7; margin-bottom:36px;
+      font-family:'DM Mono',monospace; letter-spacing:0.02em;
+      opacity:0; animation:fadeUp 0.6s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
+
+    /* ══════════════════════════════════
+       INPUT
+    ══════════════════════════════════ */
+    .input-zone {
+      width:100%; max-width:560px; padding:0 20px;
+      opacity:0; animation:fadeUp 0.6s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    .input-shell {
+      background:rgba(14,14,14,0.9);
+      border:1px solid var(--border-bright);
+      border-radius:20px; padding:6px;
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4);
+      transition:border-color 0.3s, box-shadow 0.3s;
+      cursor:text;
+    }
+    [data-theme="light"] .input-shell {
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.06), 0 20px 50px rgba(0,0,0,0.08);
+    }
+    .input-shell:focus-within {
+      border-color:rgba(245,227,176,0.35);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.5), 0 0 0 4px rgba(245,227,176,0.06), 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    .input-row { display:flex; align-items:flex-end; gap:8px; }
+    .input-row textarea {
+      flex:1; background:none; border:none; outline:none; resize:none;
+      color:var(--text); font-family:'DM Sans',sans-serif;
+      font-size:15px; line-height:1.5; padding:10px 10px;
+      min-height:44px; max-height:140px; height:44px;
+    }
+    .input-row textarea::placeholder { color:var(--text-dim); }
+    .input-send {
+      width:40px; height:40px; border-radius:12px;
+      background:var(--tan); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      opacity:0.25; transform:scale(0.88); pointer-events:none;
+      transition:opacity 0.2s, transform 0.2s;
+    }
+    .input-send.active { opacity:1; transform:scale(1); pointer-events:auto; }
+    .input-send:active { transform:scale(0.92); }
+    .input-send svg { stroke:#1a1a1a; fill:none; width:16px; height:16px; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+
+    .input-actions { display:flex; align-items:center; gap:6px; padding:2px 4px 4px; flex-wrap:wrap; }
+    .input-action-btn {
+      display:flex; align-items:center; gap:5px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:999px; padding:6px 14px;
+      font-size:10px; font-family:'DM Mono',monospace;
+      color:var(--text-dim); cursor:pointer; white-space:nowrap;
+      transition:border-color 0.15s, color 0.15s;
+    }
+    .input-action-btn:hover { border-color:var(--border-bright); color:var(--text); }
+    .input-action-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+    .land-attach-btn {
+      display:flex; align-items:center; gap:5px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:999px; padding:6px 14px;
+      font-size:10px; font-family:'DM Mono',monospace;
+      color:var(--text-dim); cursor:pointer; white-space:nowrap;
+      transition:border-color 0.15s, color 0.15s;
+      position:relative; overflow:hidden;
+    }
+    .land-attach-btn:hover { border-color:var(--border-bright); color:var(--text); }
+    .land-attach-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+    .land-attach-btn input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+
+    /* Footer */
+    .landing-footer {
+      margin-top:28px;
+      font-size:9px; color:var(--text-dim);
+      font-family:'DM Mono',monospace; letter-spacing:1.6px;
+      text-transform:uppercase;
+      opacity:0; animation:fadeIn 0.5s 0.9s ease forwards;
+    }
+
+    /* ══════════════════════════════════
+       REDIRECT ANIMATION OVERLAY
+    ══════════════════════════════════ */
+    .redirect-overlay {
+      position:fixed; inset:0; z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; opacity:0;
+    }
+    .redirect-overlay.go { pointer-events:all; animation:overlayReveal 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
+    @keyframes overlayReveal { 0%{opacity:0;}30%{opacity:1;}100%{opacity:1;} }
+    .redirect-bg {
+      position:absolute; inset:0; background:var(--bg);
+      transform:scaleY(0); transform-origin:bottom;
+    }
+    .redirect-overlay.go .redirect-bg { animation:bgReveal 0.65s cubic-bezier(0.76,0,0.24,1) 0.05s forwards; }
+    @keyframes bgReveal { from{transform:scaleY(0);}to{transform:scaleY(1);} }
+    .redirect-content {
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center; gap:16px;
+      opacity:0;
+    }
+    .redirect-overlay.go .redirect-content { animation:fadeUp 0.4s 0.35s ease forwards; }
+    .redirect-logo {
+      width:52px; height:52px; background:var(--tan); border-radius:16px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .redirect-name {
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:900; font-size:52px; color:var(--text);
+      letter-spacing:-0.01em; text-transform:uppercase; line-height:1;
+    }
+    .redirect-dots { display:flex; gap:5px; }
+    .redirect-dots span {
+      width:5px; height:5px; border-radius:50%;
+      background:rgba(255,255,255,0.25);
+      animation:dotPop 1.2s 0.5s ease infinite;
+    }
+    .redirect-dots span:nth-child(2) { animation-delay:0.65s; }
+    .redirect-dots span:nth-child(3) { animation-delay:0.8s; }
+    @keyframes dotPop { 0%,100%{background:rgba(255,255,255,0.2);}50%{background:var(--tan);} }
+
+    /* Toast */
+    .us-toast {
+      position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:#1a1a1a; border:1px solid var(--border-bright);
+      color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif;
+      padding:10px 20px; border-radius:12px;
+      opacity:0; pointer-events:none; z-index:9000;
+      transition:opacity 0.2s, transform 0.2s; white-space:nowrap;
+    }
+    .us-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .us-toast.success { border-color:rgba(16,185,129,0.4); color:var(--green); }
+    .us-toast.error   { border-color:rgba(239,68,68,0.4); color:var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- Static background -->
+<div class="bg-mesh"></div>
+<div class="bg-lines"></div>
+
+<!-- Redirect overlay -->
+<div class="redirect-overlay" id="redirectOverlay">
+  <div class="redirect-bg"></div>
+  <div class="redirect-content">
+    <div class="redirect-logo">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3 L12 15 Q12 20 7 20"/>
+      </svg>
+    </div>
+    <div class="redirect-name">Jarvis</div>
+    <div class="redirect-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- Hamburger -->
+<div class="ham-wrap">
+  <button class="ham-btn" id="hamBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- ════════ FULL MENU PANEL ════════ -->
+<div class="menu-panel" id="menuPanel">
+  <!-- Full-width header bar with close button -->
+  <div style="border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;padding:14px 20px;">
+    <button class="menu-close" onclick="closeMenu()" aria-label="Close">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="drawer-pages">
+
+    <!-- ── Main page ── -->
+    <div class="drawer-page" id="drawerMain">
+
+      <!-- Profile block -->
+      <div class="menu-profile">
+        <div class="menu-avatar" id="menuAvatarMain">{{ username[0] | upper }}
+          <div class="menu-status-dot"></div>
+        </div>
+        <div class="menu-profile-info">
+          <div class="menu-uname">{{ username }}</div>
+          <div class="menu-role">Jarvis User</div>
+        </div>
+      </div>
+
+      <!-- My Jarvis -->
+      <a href="/chat" class="d-item new-chat">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Open Chat
+      </a>
+      <a href="/new_chat" class="d-item">
+        <svg class="d-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Chat
+      </a>
+      <button class="d-item" onclick="openImagePrompt()">
+        <svg class="d-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Generate Image
+      </button>
+
+      <hr class="d-divider">
+
+      <!-- Settings & other -->
+      <button class="d-item" onclick="drawerGoTo('drawerSettings')">
+        <svg class="d-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <a href="/privacy" class="d-item">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Privacy &amp; Terms
+      </a>
+
+      <hr class="d-divider">
+
+      <!-- Dark mode toggle -->
+      <div class="d-toggle-row" onclick="toggleDark()">
+        <div class="d-toggle-left">
+          <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark mode
+        </div>
+        <button class="toggle-pill" id="darkToggle" onclick="event.stopPropagation();toggleDark()"></button>
+      </div>
+
+    </div>
+
+    <!-- ── Settings main sub-panel ── -->
+    <div class="drawer-page slide-in" id="drawerSettings">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-settings-user-card">
+        <div class="d-settings-avatar">{{ username[0] | upper }}</div>
+        <div>
+          <div class="d-settings-uname">{{ username }}</div>
+          <div class="d-settings-role">Jarvis User</div>
+        </div>
+      </div>
+      <button class="d-item" onclick="drawerGoTo('drawerSecurity')">
+        <svg class="d-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Security
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="d-item" onclick="drawerGoTo('drawerChatPrivacy')">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chats &amp; Privacy
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <hr class="d-divider">
+      <button class="d-item danger" onclick="triggerLogout(this)">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log out
+        <span class="logout-spinner" style="margin-left:auto;"></span>
+      </button>
+    </div>
+
+    <!-- ── Security sub-panel ── -->
+    <div class="drawer-page slide-in" id="drawerSecurity">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-section-label">SECURITY</div>
+      <button class="d-item" onclick="drawerGoTo('drawerChangePassword')">
+        <svg class="d-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Change Password
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="d-item" onclick="drawerGoTo('drawerChangeUsername')">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Change Username
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <hr class="d-divider">
+      <button class="d-item danger" onclick="drawerGoTo('drawerDeleteAccount')">
+        <svg class="d-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete Account
+        <svg class="d-chevron" style="stroke:#ef4444;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ── Change Password ── -->
+    <div class="drawer-page slide-in" id="drawerChangePassword">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-section-label">CHANGE PASSWORD</div>
+      <div class="d-form-group">
+        <input class="d-input" type="password" id="cpCurrent" placeholder="Current password" autocomplete="current-password">
+        <input class="d-input" type="password" id="cpNew" placeholder="New password (min 4 chars)" autocomplete="new-password">
+        <div class="d-form-msg" id="cpMsg"></div>
+        <button class="d-action-btn" onclick="submitChangePassword()">Update Password</button>
+      </div>
+    </div>
+
+    <!-- ── Change Username ── -->
+    <div class="drawer-page slide-in" id="drawerChangeUsername">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-section-label">CHANGE USERNAME</div>
+      <div class="d-form-group">
+        <input class="d-input" type="text" id="cuNew" placeholder="New username (min 3 chars)" autocomplete="username">
+        <input class="d-input" type="password" id="cuPassword" placeholder="Confirm your password" autocomplete="current-password">
+        <div class="d-form-msg" id="cuMsg"></div>
+        <button class="d-action-btn" onclick="submitChangeUsername()">Save Username</button>
+      </div>
+    </div>
+
+    <!-- ── Delete Account ── -->
+    <div class="drawer-page slide-in" id="drawerDeleteAccount">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-section-label">DANGER ZONE</div>
+      <div class="d-danger-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>This will permanently delete your account and all your chat history. This action cannot be undone.</p>
+      </div>
+      <div class="d-form-group">
+        <input class="d-input" type="password" id="daPassword" placeholder="Confirm your password" autocomplete="current-password">
+        <div class="d-form-msg" id="daMsg"></div>
+        <button class="d-action-btn danger" onclick="submitDeleteAccount()">Delete My Account</button>
+      </div>
+    </div>
+
+    <!-- ── Chats & Privacy ── -->
+    <div class="drawer-page slide-in" id="drawerChatPrivacy">
+      <button class="d-back" onclick="drawerGoBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="d-section-label">CHATS &amp; PRIVACY</div>
+      <button class="d-item" onclick="drawerGoTo('drawerViewChats')">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        View Chat History
+        <svg class="d-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <a href="/privacy" class="d-item">
+        <svg class="d-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Privacy &amp; Terms
+      </a>
+      <hr class="d-divider">
+      <button class="d-item danger" onclick="clearAllChatsFromSettings()">
+        <svg class="d-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete All Chats
+      </button>
+    </div>
+
+    <!-- ── View Chats ── -->
+    <div class="drawer-page slide-in" id="drawerViewChats">
+      <div class="d-chats-header">
+        <button class="d-back" onclick="drawerGoBack()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+      </div>
+      <div class="d-chat-list" id="viewChatListContainer">
+        <p class="d-empty" id="viewChatListLoading">Loading chats...</p>
+      </div>
+    </div>
+
+  </div><!-- end drawer-pages -->
+
+  <!-- Footer user row — full-width border, content centered -->
+  <div style="border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:center;padding:0 20px;">
+    <div class="drawer-footer">
+      <div class="drawer-user">
+        <div class="drawer-avatar">{{ username[0] | upper }}</div>
+        <div>
+          <div class="drawer-uname">{{ username }}</div>
+          <div class="drawer-role">Jarvis User</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SHELL ════════ -->
+<div class="shell">
+  <div class="hero" id="hero">
+    <h1 class="hero-title">Jarvis Ai</h1>
+    <p class="hero-sub">Your personal AI — code, vision,<br>images &amp; more. Built by Aadin.</p>
+  </div>
+
+  <div class="input-zone">
+    <div class="input-shell" id="inputShell">
+      <div class="input-row">
+        <textarea id="mainInput" placeholder="" rows="1"></textarea>
+        <button class="input-send" id="sendBtn">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-actions">
+        <button class="input-action-btn" onclick="openImagePrompt()">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Generate Image
+        </button>
+        <label class="land-attach-btn" title="Upload an image">
+          <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          Upload Image
+          <input type="file" accept="image/*" onchange="handleLandingImage(this)">
+        </label>
+        <button class="input-action-btn" onclick="window.location.href='/quiz'">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Upload PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="landing-footer">created by Aadin kc</p>
+</div>
+
+<!-- Toast -->
+<div class="us-toast" id="usToast"></div>
+
+<!-- ════════ SCRIPTS ════════ -->
+<script>
+  // ── Dark mode — synced across all pages via localStorage 'jarvis-dark' ──
+  // Key logic matches chat.html: truthy value = dark mode on
+  const darkToggle = document.getElementById('darkToggle');
+
+  function getDark() { return !!localStorage.getItem('jarvis-dark'); }
+
+  function applyTheme() {
+    const dark = getDark();
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    if (darkToggle) darkToggle.classList.toggle('on', dark);
+  }
+  applyTheme();
+
+  // Sync instantly when another page/tab changes the theme
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'jarvis-dark') applyTheme();
+  });
+
+  window.toggleDark = function() {
+    const dark = getDark();
+    if (dark) localStorage.removeItem('jarvis-dark');
+    else localStorage.setItem('jarvis-dark', '1');
+    applyTheme();
+  };
+
+  // ── Animated placeholder ──
+  const mainInput = document.getElementById('mainInput');
+  const sendBtn   = document.getElementById('sendBtn');
+  const phrases   = ['Ask Jarvis anything...','Generate an image...','Explain this code...','Summarise a PDF...','What can I help with?'];
+  let pi=0,ci=0,del=false,spd=100;
+  function typeLoop(){
+    if(document.activeElement===mainInput){setTimeout(typeLoop,250);return;}
+    const cur=phrases[pi];
+    mainInput.placeholder=del?cur.slice(0,ci-1):cur.slice(0,ci+1);
+    ci+=del?-1:1; spd=del?50:100;
+    if(!del&&ci===cur.length){del=true;spd=2200;}
+    else if(del&&ci===0){del=false;pi=(pi+1)%phrases.length;spd=400;}
+    setTimeout(typeLoop,spd);
+  }
+  typeLoop();
+
+  // ── Input auto-grow ──
+  mainInput.addEventListener('input',function(){
+    this.style.height='44px';
+    if(this.scrollHeight>44) this.style.height=this.scrollHeight+'px';
+    sendBtn.classList.toggle('active',this.value.trim().length>0);
+  });
+
+  // ── Redirect ──
+  function doRedirect(path){
+    document.body.classList.add('redirecting');
+    const ov = document.getElementById('redirectOverlay');
+    ov.classList.add('go');
+    setTimeout(()=>{ window.location.href=path; },800);
+  }
+
+  sendBtn.addEventListener('click',()=>doRedirect('/chat'));
+  mainInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doRedirect('/chat'); }
+  });
+  document.getElementById('inputShell').addEventListener('click',function(e){
+    if(e.target===mainInput) return;
+    doRedirect('/chat');
+  });
+  mainInput.addEventListener('focus',function(){
+    const isMobile = window.matchMedia('(max-width:700px)').matches;
+    if(isMobile){ this.blur(); doRedirect('/chat'); }
+  });
+
+  window.handleLandingImage = function(input){
+    const file = input.files[0];
+    if(!file) return;
+    sessionStorage.setItem('jarvis_pending','Describe this image');
+    doRedirect('/chat');
+  };
+
+  window.openImagePrompt = function(){
+    sessionStorage.setItem('jarvis_pending','Generate an image of ');
+    doRedirect('/chat');
+  };
+
+  // ── Menu open/close ──
+  const hamBtn    = document.getElementById('hamBtn');
+  const menuPanel = document.getElementById('menuPanel');
+
+  function openMenu(){
+    menuPanel.classList.add('active');
+    document.body.classList.add('menu-open');
+    document.body.style.overflow='hidden';
+  }
+  function closeMenu(){
+    menuPanel.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    document.body.style.overflow='';
+    setTimeout(resetDrawer, 350);
+  }
+  window.closeMenu = closeMenu;
+
+  hamBtn.addEventListener('click', openMenu);
+
+  // ── Drawer navigation (same as chat.html) ──
+  const drawerStack = [];
+
+  function resetDrawer(){
+    document.querySelectorAll('.drawer-page').forEach(p=>{
+      p.classList.remove('slide-out');
+      if(p.id !== 'drawerMain') p.classList.add('slide-in');
+      else p.classList.remove('slide-in');
+    });
+    drawerStack.length = 0;
+  }
+
+  window.drawerGoTo = function(id){
+    const cur = drawerStack.length ? drawerStack[drawerStack.length-1] : 'drawerMain';
+    const curEl = document.getElementById(cur);
+    const nextEl = document.getElementById(id);
+    if(!nextEl) return;
+    curEl.classList.add('slide-out');
+    nextEl.classList.remove('slide-in');
+    drawerStack.push(id);
+    // Load chats if going to view chats
+    if(id === 'drawerViewChats') loadViewChats();
+  };
+
+  window.drawerGoBack = function(){
+    if(!drawerStack.length) return;
+    const curId = drawerStack.pop();
+    const prevId = drawerStack.length ? drawerStack[drawerStack.length-1] : 'drawerMain';
+    const curEl  = document.getElementById(curId);
+    const prevEl = document.getElementById(prevId);
+    curEl.classList.add('slide-in');
+    prevEl.classList.remove('slide-out');
+  };
+
+  // ── Toast ──
+  function showToast(msg, type=''){
+    const t = document.getElementById('usToast');
+    t.textContent = msg; t.className = 'us-toast'+(type?' '+type:'');
+    void t.offsetWidth; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2800);
+  }
+
+  // ── API helpers ──
+  async function apiPost(url, body){
+    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return r.json();
+  }
+
+  // ── Change Password ──
+  window.submitChangePassword = async function(){
+    const cur = document.getElementById('cpCurrent').value;
+    const nw  = document.getElementById('cpNew').value;
+    const msg = document.getElementById('cpMsg');
+    if(!cur||!nw){ msg.textContent='Fill in both fields.'; msg.className='d-form-msg err'; return; }
+    if(nw.length<4){ msg.textContent='New password must be 4+ chars.'; msg.className='d-form-msg err'; return; }
+    try {
+      const d = await apiPost('/update_password',{current:cur,new_password:nw});
+      if(d.ok){ msg.textContent='Password updated!'; msg.className='d-form-msg ok'; document.getElementById('cpCurrent').value=''; document.getElementById('cpNew').value=''; }
+      else { msg.textContent=d.error||'Failed.'; msg.className='d-form-msg err'; }
+    } catch(e){ msg.textContent='Network error.'; msg.className='d-form-msg err'; }
+  };
+
+  // ── Change Username ──
+  window.submitChangeUsername = async function(){
+    const val = document.getElementById('cuNew').value.trim();
+    const pw  = document.getElementById('cuPassword').value;
+    const msg = document.getElementById('cuMsg');
+    if(!val||!pw){ msg.textContent='Fill in both fields.'; msg.className='d-form-msg err'; return; }
+    if(val.length<3){ msg.textContent='Username must be 3+ chars.'; msg.className='d-form-msg err'; return; }
+    try {
+      const d = await apiPost('/update_username',{username:val,password:pw});
+      if(d.ok){ msg.textContent='Username updated!'; msg.className='d-form-msg ok'; document.getElementById('cuNew').value=''; document.getElementById('cuPassword').value=''; }
+      else { msg.textContent=d.error||'Failed.'; msg.className='d-form-msg err'; }
+    } catch(e){ msg.textContent='Network error.'; msg.className='d-form-msg err'; }
+  };
+
+  // ── Delete Account ──
+  window.submitDeleteAccount = async function(){
+    const pw  = document.getElementById('daPassword').value;
+    const msg = document.getElementById('daMsg');
+    if(!pw){ msg.textContent='Enter your password.'; msg.className='d-form-msg err'; return; }
+    try {
+      const d = await apiPost('/delete_account',{password:pw});
+      if(d.ok){ window.location.href='/'; }
+      else { msg.textContent=d.error||'Failed.'; msg.className='d-form-msg err'; }
+    } catch(e){ msg.textContent='Network error.'; msg.className='d-form-msg err'; }
+  };
+
+  // ── Clear All Chats ──
+  window.clearAllChatsFromSettings = async function(){
+    if(!confirm('Delete all chats? This cannot be undone.')) return;
+    try {
+      const d = await fetch('/clear_all_chats',{method:'POST'}).then(r=>r.json());
+      if(d.ok) showToast('All chats deleted.','success');
+      else showToast(d.error||'Failed.','error');
+    } catch(e){ showToast('Network error.','error'); }
+  };
+
+  // ── Load View Chats ──
+  async function loadViewChats(){
+    const c = document.getElementById('viewChatListContainer');
+    c.innerHTML='<p class="d-empty">Loading chats...</p>';
+    try {
+      const d = await fetch('/get_sessions').then(r=>r.json());
+      if(d.sessions&&d.sessions.length){
+        c.innerHTML = d.sessions.map(s=>`
+          <div class="d-chat-card">
+            <a class="d-chat-link" href="/account/chat/${s.session_id}">
+              <span class="d-chat-link-title">${s.title||'Untitled chat'}</span>
+              <span class="d-chat-link-date">${s.created_at}</span>
+            </a>
+          </div>`).join('');
+      } else {
+        c.innerHTML='<p class="d-empty">No chats yet — start a conversation!</p>';
+      }
+    } catch(e){ c.innerHTML='<p class="d-empty">Could not load history.</p>'; }
+  }
+
+  // ── Logout ──
+  window.triggerLogout = function(el){
+    el.classList.add('loading');
+    fetch('/logout_now',{method:'POST'})
+      .then(()=>{ window.location.href='/'; })
+      .catch(()=>{ window.location.href='/'; });
+    return false;
+  };
+</script>
+
+</body>
+</html>
