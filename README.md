@@ -1,5 +1,16 @@
 # Jarvis AI
 
+
+# Note 
+
+This project is discontinued, Since having no Premium Features On several Platforms puts me in a difficult area to 
+to make up a decision And I personally Can't spend Money for this project so ive decided to dis-continue. 
+The Website Wouldn't taken Down it ill be still Hosted via Vercel but There won't Be new updates or fixes
+
+
+
+
+
 A personal AI chatbot web app powered by **Groq LLaMA**, built with Flask and deployed on Vercel. Jarvis has a warm, conversational personality, supports image generation and analysis, real-time math, and a full user authentication system with a PostgreSQL backend.
 
  **Live Demo:** [jarvis-ai-aadin.vercel.app](https://jarvis-ai-aadin.vercel.app/)
