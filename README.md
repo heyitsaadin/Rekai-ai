@@ -2,7 +2,7 @@
 
 A personal AI assistant web app powered by **Groq LLaMA**, built with Flask and deployed on Vercel. Jarvis has a warm, conversational personality and supports image generation, image analysis and editing, PDF-based quiz and exam generation, real-time math, chat sharing, and a full user authentication system with a PostgreSQL backend.
 
-**Live Demo:** [jarvis-ai-aadin.vercel.app](https://lyra-ai-aadin.vercel.app/)
+**Live Demo:** [jarvis-ai-aadin.vercel.app](https://rekai.vercel.app/)
 
 ---
 
