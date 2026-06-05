@@ -11,6 +11,10 @@
   ],
   "routes": [
     {
+      "src": "/admin/.*",
+      "dest": "app.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "app.py"
     }
