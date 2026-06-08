@@ -1,21 +1,11 @@
-import logging
-from app import create_app
+from flask import Flask
 
-# Configure basic logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+app = Flask(__name__)
 
-try:
-    app = create_app()
-    logger.info("Application created successfully")
-except Exception as e:
-    logger.error(f"Failed to create application: {e}")
-    # Create a minimal app to at least show an error message instead of a crash
-    from flask import Flask
-    app = Flask(__name__)
-    @app.route('/')
-    def error():
-        return f"App Initialization Error: {e}", 500
+@app.route('/')
+def home():
+    return "Jarvis AI is currently undergoing maintenance. Please check back soon!"
 
-# This file is kept as the entry point for Vercel deployment.
-# All application logic has been moved to the app/ directory.
+@app.route('/health')
+def health():
+    return "OK", 200
