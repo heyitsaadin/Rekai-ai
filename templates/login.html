@@ -330,6 +330,53 @@
             .desktop-panel { flex: 1.2; }
             .desktop-right  { width: 520px; padding: 48px 64px; }
         }
+
+        /* ── SKELETON LOADERS ── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .sk {
+            border-radius: 8px;
+            background: linear-gradient(90deg,
+                var(--ui-subtle) 25%,
+                color-mix(in srgb, var(--ui-subtle) 60%, var(--bg-primary)) 50%,
+                var(--ui-subtle) 75%
+            );
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+        }
+
+        /* Skeleton overlay — sits on top of .auth-card, same dimensions */
+        .skeleton-card {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; gap: 24px;
+            background: var(--bg-primary);
+            z-index: 20;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+        .skeleton-card.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* heading block */
+        .sk-heading { height: 38px; width: 55%; border-radius: 6px; }
+
+        /* label + input pair */
+        .sk-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+        .sk-label { height: 10px; width: 72px; border-radius: 4px; }
+        .sk-input { height: 48px; width: 100%; border-radius: 12px; }
+
+        /* buttons */
+        .sk-btn-primary   { height: 50px; width: 100%; border-radius: 12px; margin-top: 4px; }
+        .sk-btn-secondary { height: 48px; width: 100%; border-radius: 12px; margin-top: 8px;
+                            background: transparent !important; animation: none !important;
+                            border: 1.5px solid var(--ui-subtle); }
+
+        /* wrapper so auth-card can be position:relative */
+        .auth-card { position: relative; }
     </style>
     <script>
         /* Apply theme immediately — same key chat.html uses */
@@ -369,6 +416,24 @@
     <div class="desktop-right">
 
     <main class="auth-card">
+
+        <!-- SKELETON LOADER — mirrors: heading + 2 fields + primary btn + secondary btn -->
+        <div class="skeleton-card" id="skeletonLoader" aria-hidden="true">
+            <div class="sk sk-heading"></div>
+            <div>
+                <div class="sk-field">
+                    <div class="sk sk-label"></div>
+                    <div class="sk sk-input"></div>
+                </div>
+                <div class="sk-field">
+                    <div class="sk sk-label"></div>
+                    <div class="sk sk-input"></div>
+                </div>
+                <div class="sk sk-btn-primary"></div>
+                <div class="sk-btn-secondary sk"></div>
+            </div>
+        </div>
+
         <div class="auth-header">
             <h1>Welcome Back</h1>
         </div>
@@ -543,6 +608,19 @@
                 window.goTo(href);
             });
         })();
+        /* ── Skeleton dismiss ── */
+        (function () {
+            const sk = document.getElementById('skeletonLoader');
+            if (!sk) return;
+            function dismiss() {
+                sk.classList.add('hidden');
+                setTimeout(() => { if (sk.parentNode) sk.parentNode.removeChild(sk); }, 400);
+            }
+            // Dismiss once fonts + layout are ready (DOMContentLoaded + small buffer)
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { setTimeout(dismiss, 500); });
+            } else {
+                setTimeout(dismiss, 500);
+            }
+        })();
     </script>
-</body>
-</html>

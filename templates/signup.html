@@ -378,6 +378,59 @@
             .desktop-right  { width: 520px; padding: 48px 64px; }
         }
 
+        /* ── SKELETON LOADERS ── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .sk {
+            border-radius: 8px;
+            background: linear-gradient(90deg,
+                var(--ui-subtle) 25%,
+                color-mix(in srgb, var(--ui-subtle) 60%, var(--bg-primary)) 50%,
+                var(--ui-subtle) 75%
+            );
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+        }
+
+        .skeleton-card {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; gap: 20px;
+            background: var(--bg-primary);
+            z-index: 20;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+        .skeleton-card.hidden { opacity: 0; pointer-events: none; }
+
+        .sk-heading  { height: 38px; width: 62%; border-radius: 6px; }
+        .sk-field    { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+        .sk-label    { height: 10px; width: 72px; border-radius: 4px; }
+        .sk-input    { height: 48px; width: 100%; border-radius: 12px; }
+
+        /* checkbox + text row */
+        .sk-legal-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .sk-checkbox  { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+        .sk-legal-text{ height: 13px; width: 200px; border-radius: 4px; }
+
+        .sk-btn-primary   { height: 50px; width: 100%; border-radius: 12px; }
+        .sk-btn-secondary { height: 48px; width: 100%; border-radius: 12px; margin-top: 8px;
+                            background: transparent !important; animation: none !important;
+                            border: 1.5px solid var(--ui-subtle); }
+
+        /* divider */
+        .sk-divider { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+        .sk-divider-line { flex: 1; height: 1px; background: color-mix(in srgb, var(--text-secondary) 20%, transparent); }
+        .sk-divider-dot  { width: 18px; height: 10px; border-radius: 4px; }
+
+        /* guest button */
+        .sk-btn-guest { height: 48px; width: 100%; border-radius: 12px;
+                        background: transparent !important; animation: none !important;
+                        border: 1.5px dashed color-mix(in srgb, var(--text-secondary) 35%, transparent); }
+
+        .auth-card { position: relative; }
+
         /* ── GUEST BUTTON ── */
         .d-guest-btn {
             width: 100%; padding: 13px;
@@ -451,6 +504,34 @@
     <div class="desktop-right">
 
     <main class="auth-card">
+
+        <!-- SKELETON LOADER — mirrors: heading + 2 fields + checkbox + primary btn + secondary + divider + guest -->
+        <div class="skeleton-card" id="skeletonLoader" aria-hidden="true">
+            <div class="sk sk-heading"></div>
+            <div>
+                <div class="sk-field">
+                    <div class="sk sk-label"></div>
+                    <div class="sk sk-input"></div>
+                </div>
+                <div class="sk-field">
+                    <div class="sk sk-label"></div>
+                    <div class="sk sk-input"></div>
+                </div>
+                <div class="sk-legal-row">
+                    <div class="sk sk-checkbox"></div>
+                    <div class="sk sk-legal-text"></div>
+                </div>
+                <div class="sk sk-btn-primary" style="margin-top:8px;"></div>
+                <div class="sk-btn-secondary sk"></div>
+                <div class="sk-divider" style="margin:8px 0;">
+                    <div class="sk-divider-line"></div>
+                    <div class="sk sk-divider-dot"></div>
+                    <div class="sk-divider-line"></div>
+                </div>
+                <div class="sk-btn-guest"></div>
+            </div>
+        </div>
+
         <div class="auth-header">
             <h1>Create Account</h1>
         </div>
@@ -669,6 +750,20 @@
                 e.preventDefault();
                 window.goTo(href);
             });
+        })();
+        /* ── Skeleton dismiss ── */
+        (function () {
+            const sk = document.getElementById('skeletonLoader');
+            if (!sk) return;
+            function dismiss() {
+                sk.classList.add('hidden');
+                setTimeout(() => { if (sk.parentNode) sk.parentNode.removeChild(sk); }, 400);
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { setTimeout(dismiss, 500); });
+            } else {
+                setTimeout(dismiss, 500);
+            }
         })();
     </script>
 </body>
