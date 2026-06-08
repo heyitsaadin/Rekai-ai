@@ -765,14 +765,14 @@
       color:var(--text-dim);
     }
     .projects-new-btn {
-      display:flex; align-items:center; gap:5px;
-      font-size:11px; font-family:'DM Sans',sans-serif; font-weight:600;
+      display:flex; align-items:center; justify-content:center;
+      width:26px; height:26px;
       color:var(--text-secondary); background:var(--surface);
-      border:1px solid var(--border); border-radius:8px;
-      padding:5px 10px; cursor:pointer; transition:all 0.15s;
+      border:1px solid var(--border); border-radius:7px;
+      cursor:pointer; transition:all 0.15s; flex-shrink:0;
     }
-    .projects-new-btn:hover { background:var(--surface2); color:var(--text); }
-    .projects-new-btn svg { width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2; }
+    .projects-new-btn:hover { background:var(--surface2); color:var(--text); border-color:var(--border-bright); }
+    .projects-new-btn svg { width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5; }
     /* Empty state */
     .projects-empty {
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -797,24 +797,23 @@
     }
     /* Project cards grid */
     .projects-grid {
-      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+      display:grid; grid-template-columns:1fr; gap:8px;
     }
     .project-card {
       position:relative; border-radius:14px;
       border:1px solid var(--border); background:var(--surface);
       padding:14px 14px 12px; cursor:pointer;
       transition:all 0.18s; overflow:hidden;
-      display:flex; flex-direction:column; gap:6px;
+      display:flex; flex-direction:column; gap:4px;
       text-decoration:none;
     }
     .project-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.12); border-color:var(--border-bright); }
     .project-card-accent {
-      position:absolute; top:0;left:0;right:0; height:3px;
-      border-radius:14px 14px 0 0;
+      display:none;
     }
     .project-card-name {
-      font-size:13px; font-weight:700; color:var(--text);
-      font-family:'DM Sans',sans-serif; margin-top:4px;
+      font-size:13px; font-weight:700;
+      font-family:'DM Sans',sans-serif;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .project-card-desc {
@@ -877,11 +876,11 @@
 
     @media (min-width:768px) {
       .projects-section { max-width:560px; }
-      .projects-grid { grid-template-columns:repeat(3,1fr); }
+      .projects-grid { grid-template-columns:1fr; }
     }
     @media (min-width:1280px) {
       .projects-section { max-width:720px; }
-      .projects-grid { grid-template-columns:repeat(4,1fr); }
+      .projects-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -1384,9 +1383,8 @@
   <div class="projects-section" id="projectsSection">
     <div class="projects-header">
       <span class="projects-label">Projects</span>
-      <button class="projects-new-btn" onclick="openProjectModal()" id="projectsNewBtn" style="display:none;">
+      <button class="projects-new-btn" onclick="openProjectModal()" id="projectsNewBtn" style="display:none;" title="New Project">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Project
       </button>
     </div>
     <!-- Empty state (shown when no projects) -->
@@ -2023,8 +2021,7 @@
       if (newBtn) newBtn.style.display = 'flex';
       grid.innerHTML = projectsData.map(p => `
         <a class="project-card" href="/project_chat/${p.id}" onclick="return handleProjectOpen(event, ${p.id})">
-          <div class="project-card-accent" style="background:${p.color || '#6366f1'}"></div>
-          <div class="project-card-name">${escHtml(p.name)}</div>
+          <div class="project-card-name" style="color:${p.color || '#6366f1'}">${escHtml(p.name)}</div>
           ${p.description ? `<div class="project-card-desc">${escHtml(p.description)}</div>` : ''}
           <div class="project-card-meta">${p.created_at ? p.created_at.split(' ')[0] : ''}</div>
           <button class="project-card-delete" onclick="deleteProject(event, ${p.id})" title="Delete project">
