@@ -16,12 +16,8 @@ def create_app():
     app.config["MAX_COOKIE_SIZE"] = 4093
     
     # Initialize extensions
-    limiter = Limiter(
-        get_remote_address,
-        app=app,
-        default_limits=["500 per day"],
-        storage_uri="memory://"
-    )
+    # Limiter disabled for stability
+    pass
     
     # Initialize Database
     try:
