@@ -1323,10 +1323,11 @@
                 <svg class="d-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New chat
             </a>
-            <a href="/landing#projects" class="d-item">
+            <button class="d-item" onclick="drawerGoTo('drawerProjects')">
                 <svg class="d-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 Projects
-            </a>
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
             <button class="d-item" onclick="drawerGoTo('drawerChats')">
                 <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Chats
@@ -1384,6 +1385,23 @@
                 <p>Jarvis was designed and built by Aadin, a self-taught developer passionate about AI and cybersecurity.</p>
                 <p>Built entirely on a mobile phone — backend, security layer, and UI — as part of a vision for AI-powered secure systems.</p>
                 <p class="tag">MIA CORE // <span>AADIN</span></p>
+            </div>
+        </div>
+
+        <!-- Projects sub-panel -->
+        <div class="drawer-page slide-in" id="drawerProjects">
+            <div class="d-chats-header">
+                <button class="d-back" onclick="drawerGoBack()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </button>
+                <a href="/landing#projects" class="d-clear-btn" style="text-decoration:none;display:flex;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Project
+                </a>
+            </div>
+            <div class="d-chat-list" id="projectListContainer">
+                <p class="d-empty">Loading projects...</p>
             </div>
         </div>
 
@@ -2401,6 +2419,10 @@
             .finally(() => { window.location.href = '/new_chat'; });
     }
 
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     // Drawer sub-panels
     let drawerHistory = [];
     const allDrawerPanels = ['drawerAbout','drawerDev','drawerChats','drawerSettings','drawerSecurity','drawerChangePassword','drawerChangeUsername','drawerDeleteAccount','drawerChatPrivacy','drawerViewChats'];
@@ -2415,6 +2437,7 @@
         // Load chats when navigating to chats panel
         if (pageId === 'drawerChats') loadChats('chatListContainer', 'clearAllBtn');
         if (pageId === 'drawerViewChats') loadChats('viewChatListContainer', null);
+        if (pageId === 'drawerProjects') loadProjects();
     }
     function drawerGoBack(reset) {
         if (reset) {
@@ -2435,6 +2458,37 @@
     }
 
     // ── Dynamic chat loading ──
+    function loadProjects() {
+        const container = document.getElementById('projectListContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="d-empty">Loading projects...</p>';
+
+        fetch('/projects')
+            .then(r => r.json())
+            .then(data => {
+                const projects = data.projects || [];
+                if (!projects.length) {
+                    container.innerHTML = '<p class="d-empty">No projects yet.<br><a href="/landing#projects" style="color:var(--accent);text-decoration:none;">Create your first project</a></p>';
+                    return;
+                }
+                container.innerHTML = '';
+                projects.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'd-chat-card';
+                    const date = p.created_at ? p.created_at.slice(0, 10) : '';
+                    card.innerHTML = 
+                        '<a href="/project_chat/' + p.id + '" class="d-chat-link">' +
+                        '<span class="d-chat-link-title" style="color:' + (p.color || 'var(--accent)') + ';font-weight:700;">' + escHtml(p.name) + '</span>' +
+                        '<span class="d-chat-link-date">' + escHtml(date) + '</span>' +
+                        '</a>';
+                    container.appendChild(card);
+                });
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="d-empty">Could not load projects.</p>';
+            });
+    }
+
     function loadChats(containerId, clearBtnId) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -2489,9 +2543,7 @@
     // Get current session key
     const currentSessionKey = _chatKey;
 
-    function escHtml(s) {
-        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+
 
     function deleteSingleChat(sessionKey, btn) {
         if (!confirm('Delete this chat?')) return;

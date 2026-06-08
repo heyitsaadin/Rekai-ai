@@ -480,7 +480,7 @@ def get_chat_sessions(username):
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(
         "SELECT id, session_key, messages, created_at, updated_at, COALESCE(is_pinned, FALSE) as is_pinned "
-        "FROM chat_sessions WHERE username=%s ORDER BY is_pinned DESC, updated_at DESC",
+        "FROM chat_sessions WHERE username=%s AND project_id IS NULL ORDER BY is_pinned DESC, updated_at DESC",
         (username,)
     )
     rows = cur.fetchall()
