@@ -1,2 +1,0 @@
-This is a dummy file created by Manus to test commit capabilities in the jarvis-ai repository.
-Date: 2026-06-08

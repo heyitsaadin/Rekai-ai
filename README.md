@@ -6,7 +6,7 @@ A personal AI assistant web app powered by **Groq LLaMA**, built with Flask and 
 
 ---
 
-## Features
+## 🚀 Features
 
 - **AI Chat** — Powered by Groq's LLaMA model. Jarvis replies conversationally, matches user energy, and keeps responses natural and to the point.
 - **Image Generation** — Generate images from text prompts via Pollinations.ai. Supports download of generated images. Jarvis auto-analyses each generated image for context.
@@ -31,124 +31,95 @@ A personal AI assistant web app powered by **Groq LLaMA**, built with Flask and 
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, Flask |
-| AI / LLM | Groq API (LLaMA 3.1 8B, LLaMA 4 Scout 17B vision) |
-| Image Generation | Pollinations.ai |
-| Image Editing | NVIDIA API (Qwen image-edit) |
-| Database | PostgreSQL via Neon (psycopg2) |
-| Frontend | HTML, CSS, Vanilla JS, Marked.js |
-| Rate Limiting | flask-limiter |
-| Deployment | Vercel |
-| Analytics | Vercel Web Analytics |
-| Alerts | Discord Webhooks |
+| **Backend** | Python, Flask |
+| **AI / LLM** | Groq API (LLaMA 3.1 8B, LLaMA 4 Scout 17B vision) |
+| **Image Generation** | Pollinations.ai, HuggingFace, Together AI |
+| **Image Editing** | NVIDIA API (Qwen image-edit) |
+| **Database** | PostgreSQL via Neon (psycopg2) |
+| **Frontend** | HTML, CSS, Vanilla JS, Marked.js |
+| **Rate Limiting** | flask-limiter |
+| **Deployment** | Vercel |
+| **Analytics** | Vercel Web Analytics |
+| **Alerts** | Discord Webhooks |
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-```
+```text
 Jarvis-ai/
-├── app.py                  # Main Flask app — all routes and logic
+├── app/                    # Main application package
+│   ├── routes/             # Route handlers (Blueprints)
+│   ├── services/           # Business logic and external API integrations
+│   ├── utils/              # Helper functions and utilities
+│   ├── static/             # Static assets (JS, CSS, Images)
+│   ├── templates/          # HTML templates
+│   ├── __init__.py         # App factory and initialization
+│   └── models.py           # Database models and schema
+├── .env.example            # Template for environment variables
+├── .gitignore              # Files to exclude from Git
+├── app.py                  # Legacy entry point (kept for Vercel compatibility)
+├── run.py                  # Local development entry point
 ├── requirements.txt        # Python dependencies
-├── templates/
-│   ├── landing.html        # Post-login landing page
-│   ├── chat.html           # Main chat interface
-│   ├── shared_chat.html    # Public shared chat view
-│   ├── login.html          # Login page
-│   ├── signup.html         # Sign up page
-│   ├── privacy.html        # Privacy policy
-│   ├── quiz.html           # Quiz / exam generator page
-│   ├── banned.html         # Banned user page
-│   ├── 404.html            # Custom 404 error page
-│   └── 500.html            # Custom 500 error page
-└── README.md
+├── vercel.json             # Vercel deployment configuration
+└── README.md               # Project documentation
 ```
 
 ---
 
-## Environment Variables
+## ⚙️ Setup & Installation
 
-Never commit secrets. Set these in your Vercel project settings or a local `.env` file:
+### Prerequisites
+- Python 3.8+
+- PostgreSQL database (e.g., Neon.tech)
+- API keys for Groq, NVIDIA, etc.
 
-| Variable | Description |
-|---|---|
-| `SECRET_KEY` | Flask session secret key |
-| `DATABASE_URL` | Neon PostgreSQL connection string |
-| `GROQ_API_KEY` | Primary Groq API key (chat + profile) |
-| `GROQ_API_KEY_2` | Secondary Groq key for vision (higher limits) |
-| `GROQ_API_KEY_3` | Third Groq key for quiz/exam generation rotation |
-| `NVIDIA_API_KEY` | NVIDIA API key for image editing |
-| `ADMIN_PASSWORD` | Password for the admin dashboard |
-| `OWNER_CODE` | Secret owner verification code |
-| `DISCORD_WEBHOOK` | Discord webhook URL for security alerts |
-| `ENGLISH_BAD_WORDS` | Comma-separated English words to block |
-| `MALAYALAM_BAD_WORDS` | Comma-separated Malayalam words to block |
+### Installation
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/heyitsaadin/Jarvis-ai.git
+   cd Jarvis-ai
+   ```
 
----
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Running Locally
+3. **Configure Environment**
+   Copy `.env.example` to `.env` and fill in your details:
+   ```bash
+   cp .env.example .env
+   ```
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/heyitsaadin/Jarvis-ai.git
-cd Jarvis-ai
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Set environment variables
-export GROQ_API_KEY=your_key_here
-export DATABASE_URL=your_neon_db_url
-export SECRET_KEY=any_random_string
-export ADMIN_PASSWORD=your_admin_password
-export OWNER_CODE=your_owner_code
-export DISCORD_WEBHOOK=your_webhook_url
-export ENGLISH_BAD_WORDS=word1,word2
-export MALAYALAM_BAD_WORDS=word1,word2
-
-# 4. Run
-python app.py
-```
-
-Then open [http://localhost:5000](http://localhost:5000)
+4. **Run Locally**
+   ```bash
+   python run.py
+   ```
+   Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ---
 
-## Database
+## 🛡 Security Features
 
-Uses **Neon PostgreSQL**. Tables are auto-created on first run via `init_db()`:
-
-- `users` — username and hashed password
-- `history` — per-user calculation history
-- `visits` — timestamped page visits for analytics
-- `chat_sessions` — saved chat sessions with pin support
-- `user_profiles` — JSON-stored interest profiles, sentiment, and message stats
-- `shared_chats` — public shared chat snapshots
-- `bans` — banned users and IPs
+- **AST-based Math Parsing**: Securely evaluates math expressions without using `eval()`.
+- **Rate Limiting**: Protects sensitive routes from brute-force and abuse.
+- **Password Hashing**: Secure storage of user credentials using Werkzeug.
+- **Timing Attack Protection**: Uses `hmac.compare_digest()` for secret comparisons.
+- **Content Filtering**: Configurable bad words filter via environment variables.
 
 ---
 
-## Security
+## 📄 License
 
-| # | Issue | Fix Applied |
-|---|---|---|
-| 1 | Bad words hardcoded in source | Moved to `ENGLISH_BAD_WORDS` and `MALAYALAM_BAD_WORDS` env variables |
-| 2 | Math used raw `eval()` | Replaced with AST-based parser — only allows math nodes, no code execution |
-| 3 | No rate limiting on sensitive routes | Added `flask-limiter` — login (15/min), signup (10/min), chat (30/min), admin (20/min) |
-| 4 | Session cookie could overflow | Chat history capped at last 40 messages |
-| 5 | Admin had no brute-force protection | Covered by rate limiter on the admin route |
-| 6 | Owner code used `==` comparison | Switched to `hmac.compare_digest()` to prevent timing attacks |
-
-- Passwords hashed with Werkzeug's `generate_password_hash`
-- All API keys and secrets loaded from environment variables — never hardcoded
-- Attempted secret extraction and owner impersonation trigger Discord alerts instantly
+This project is for educational purposes.
 
 ---
 
-## Built By
+## 👨‍💻 Built By
 
 **Aadin KC** — [Portfolio](https://aadinkc-portfolio.vercel.app/) · [GitHub](https://github.com/heyitsaadin) · [LinkedIn](https://www.linkedin.com/in/aadin-kc-128bb3371)
