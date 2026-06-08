@@ -99,6 +99,8 @@ def init_db():
 
 def get_user(username):
     conn = get_db()
+    if conn is None:
+        return None
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM users WHERE username=%s", (username,))
     user = cur.fetchone()
@@ -108,6 +110,8 @@ def get_user(username):
 
 def add_user(username, password):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("INSERT INTO users VALUES (%s, %s)", (username, generate_password_hash(password)))
     conn.commit()
@@ -116,6 +120,8 @@ def add_user(username, password):
 
 def update_username_db(old_username, new_username):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("UPDATE users            SET username=%s WHERE username=%s", (new_username, old_username))
     cur.execute("UPDATE history          SET username=%s WHERE username=%s", (new_username, old_username))
@@ -127,6 +133,8 @@ def update_username_db(old_username, new_username):
 
 def update_password_db(username, new_password):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("UPDATE users SET password=%s WHERE username=%s",
                 (generate_password_hash(new_password), username))
@@ -136,6 +144,8 @@ def update_password_db(username, new_password):
 
 def save_history(username, calculation):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("INSERT INTO history VALUES (%s, %s)", (username, calculation))
     conn.commit()
@@ -144,6 +154,19 @@ def save_history(username, calculation):
 
 def get_profile(username, TOPIC_KEYWORDS=None):
     conn = get_db()
+    if conn is None:
+        return {
+            "interests": {k: 0 for k in (TOPIC_KEYWORDS or {})},
+            "total_messages": 0,
+            "user_messages": 0,
+            "avg_length": 0,
+            "peak_hour": None,
+            "hour_counts": {},
+            "top_topics": [],
+            "sentiment": "neutral",
+            "last_groq_analysis": None,
+            "groq_summary": ""
+        }
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT profile_json FROM user_profiles WHERE username=%s", (username,))
     row = cur.fetchone()
@@ -166,6 +189,8 @@ def get_profile(username, TOPIC_KEYWORDS=None):
 
 def save_profile(username, profile, IST=None):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     now = datetime.now(IST).strftime("%Y-%m-%d %H:%M") if IST else datetime.now().strftime("%Y-%m-%d %H:%M")
     cur.execute("""
@@ -179,6 +204,8 @@ def save_profile(username, profile, IST=None):
 
 def get_chat_sessions(username):
     conn = get_db()
+    if conn is None:
+        return []
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(
         "SELECT id, session_key, messages, created_at, updated_at, COALESCE(is_pinned, FALSE) as is_pinned "
@@ -190,8 +217,25 @@ def get_chat_sessions(username):
     return_db(conn)
     return rows
 
+def get_chat_session(username, session_key):
+    conn = get_db()
+    if conn is None:
+        return None
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        "SELECT id, session_key, messages, created_at, updated_at, COALESCE(is_pinned, FALSE) as is_pinned "
+        "FROM chat_sessions WHERE username=%s AND session_key=%s",
+        (username, session_key)
+    )
+    row = cur.fetchone()
+    cur.close()
+    return_db(conn)
+    return row
+
 def save_chat_session(username, session_key, messages, IST=None):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     now = datetime.now(IST).strftime("%Y-%m-%d %H:%M") if IST else datetime.now().strftime("%Y-%m-%d %H:%M")
     cur.execute("""
@@ -207,6 +251,8 @@ def save_chat_session(username, session_key, messages, IST=None):
 
 def delete_chat_session(username, session_key):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("DELETE FROM chat_sessions WHERE username=%s AND session_key=%s",
                 (username, session_key))
@@ -216,14 +262,29 @@ def delete_chat_session(username, session_key):
 
 def delete_all_chat_sessions(username):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("DELETE FROM chat_sessions WHERE username=%s", (username,))
     conn.commit()
     cur.close()
     return_db(conn)
 
+def pin_chat_session(username, session_key, is_pinned):
+    conn = get_db()
+    if conn is None:
+        return
+    cur = conn.cursor()
+    cur.execute("UPDATE chat_sessions SET is_pinned=%s WHERE username=%s AND session_key=%s",
+                (is_pinned, username, session_key))
+    conn.commit()
+    cur.close()
+    return_db(conn)
+
 def is_banned(value, ban_type):
     conn = get_db()
+    if conn is None:
+        return False
     cur = conn.cursor()
     cur.execute("SELECT 1 FROM bans WHERE type=%s AND value=%s", (ban_type, value))
     found = cur.fetchone() is not None
@@ -233,6 +294,8 @@ def is_banned(value, ban_type):
 
 def add_ban(ban_type, value, reason, banned_by, IST=None):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     now = datetime.now(IST).strftime("%Y-%m-%d %H:%M") if IST else datetime.now().strftime("%Y-%m-%d %H:%M")
     cur.execute("""
@@ -246,6 +309,8 @@ def add_ban(ban_type, value, reason, banned_by, IST=None):
 
 def remove_ban(value):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     cur.execute("DELETE FROM bans WHERE value=%s", (value,))
     conn.commit()
@@ -254,6 +319,8 @@ def remove_ban(value):
 
 def get_all_bans():
     conn = get_db()
+    if conn is None:
+        return []
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM bans ORDER BY banned_at DESC")
     rows = cur.fetchall()
@@ -263,6 +330,8 @@ def get_all_bans():
 
 def log_visit(IST=None):
     conn = get_db()
+    if conn is None:
+        return
     cur = conn.cursor()
     now = datetime.now(IST) if IST else datetime.now()
     cur.execute("INSERT INTO visits VALUES (%s, %s)",
@@ -270,3 +339,30 @@ def log_visit(IST=None):
     conn.commit()
     cur.close()
     return_db(conn)
+
+def save_shared_chat(username, session_key, messages, title, share_token, IST=None):
+    conn = get_db()
+    if conn is None:
+        return
+    cur = conn.cursor()
+    now = datetime.now(IST).strftime("%Y-%m-%d %H:%M") if IST else datetime.now().strftime("%Y-%m-%d %H:%M")
+    cur.execute("""
+        INSERT INTO shared_chats (share_token, username, session_key, messages, title, shared_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (share_token, username, session_key, _json_mod.dumps(messages), title, now))
+    conn.commit()
+    cur.close()
+    return_db(conn)
+
+def get_shared_chat(share_token):
+    conn = get_db()
+    if conn is None:
+        return None
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT * FROM shared_chats WHERE share_token=%s", (share_token,))
+    row = cur.fetchone()
+    cur.close()
+    return_db(conn)
+    if row:
+        row['messages'] = _json_mod.loads(row['messages'])
+    return row

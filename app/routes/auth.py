@@ -41,6 +41,19 @@ def signup():
         return redirect("/landing")
     return render_template("signup.html")
 
+@auth_bp.route("/check_username", methods=["GET"])
+def check_username():
+    username = request.args.get("username", "").strip()
+    
+    if not username or len(username) < 3:
+        return jsonify({"available": False})
+    
+    try:
+        user = get_user(username)
+        return jsonify({"available": user is None})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @auth_bp.route("/logout")
 def logout():
     session.clear()
