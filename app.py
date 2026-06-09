@@ -754,21 +754,35 @@ def _img_html(src, prompt):
 
 def _try_huggingface(prompt):
     import base64 as _b64
-    HF_API_KEY = os.environ.get("HF_API_KEY", "")
-    if not HF_API_KEY:
+    # Collect all HF keys: HF_API_KEY, HF_API_KEY_2, HF_API_KEY_3, ...
+    hf_keys = []
+    primary = os.environ.get("HF_API_KEY", "")
+    if primary:
+        hf_keys.append(primary)
+    i = 2
+    while True:
+        k = os.environ.get(f"HF_API_KEY_{i}", "")
+        if not k:
+            break
+        hf_keys.append(k)
+        i += 1
+    if not hf_keys:
         return None
-    try:
-        resp = requests.post(
-            "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-            headers={"Authorization": f"Bearer {HF_API_KEY}"},
-            json={"inputs": prompt},
-            timeout=60
-        )
-        if resp.status_code == 200 and resp.content:
-            b64 = _b64.b64encode(resp.content).decode("utf-8")
-            return _img_html(f"data:image/jpeg;base64,{b64}", prompt)
-    except Exception as e:
-        print(f"[IMG][HF] exception: {e}")
+    for idx, key in enumerate(hf_keys, 1):
+        try:
+            resp = requests.post(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+                headers={"Authorization": f"Bearer {key}"},
+                json={"inputs": prompt},
+                timeout=60
+            )
+            if resp.status_code == 200 and resp.content:
+                b64 = _b64.b64encode(resp.content).decode("utf-8")
+                print(f"[IMG][HF] success with key #{idx}")
+                return _img_html(f"data:image/jpeg;base64,{b64}", prompt)
+            print(f"[IMG][HF] key #{idx} returned status {resp.status_code}")
+        except Exception as e:
+            print(f"[IMG][HF] key #{idx} exception: {e}")
     return None
 
 def _try_together(prompt):
@@ -1061,17 +1075,25 @@ def search_youtube(query):
         return fallback
 
 def _compact_for_session(text):
+    def _extract_yt_compact(yt_html):
+        m_title = re.search(r'(?:jarvis-yt-title|mia-yt-title)[^>]*>&#9658;\s*(.*?)</span>', yt_html)
+        title = m_title.group(1).strip() if m_title else "YouTube video"
+        m_vid = re.search(r'youtube\.com/embed/([A-Za-z0-9_-]{11})', yt_html)
+        vid_id = m_vid.group(1) if m_vid else ""
+        m_ch = re.search(r'(?:jarvis-yt-channel|mia-yt-channel)[^>]*>(.*?)</span>', yt_html)
+        channel = m_ch.group(1).strip() if m_ch else ""
+        if vid_id and channel:
+            return f"[YOUTUBE VIDEO: {title} | {vid_id} | {channel}]"
+        if vid_id:
+            return f"[YOUTUBE VIDEO: {title} | {vid_id}]"
+        return f"[YOUTUBE VIDEO: {title}]"
     if '##YT_SPLIT##' in text:
         parts = text.split('##YT_SPLIT##', 1)
         txt_part = parts[0].strip()[:200]
-        yt_part  = parts[1]
-        m = re.search(r'(?:jarvis-yt-title|mia-yt-title)[^>]*>&#9658;\s*(.*?)</span>', yt_part)
-        title = m.group(1).strip() if m else "YouTube video"
-        return f"{txt_part}\n[YOUTUBE VIDEO: {title}]"
+        compact = _extract_yt_compact(parts[1])
+        return f"{txt_part}\n{compact}" if txt_part else compact
     if 'jarvis-yt-wrap' in text or 'mia-yt-wrap' in text:
-        m = re.search(r'(?:jarvis-yt-title|mia-yt-title)[^>]*>&#9658;\s*(.*?)</span>', text)
-        title = m.group(1).strip() if m else "YouTube video"
-        return f"[YOUTUBE VIDEO: {title}]"
+        return _extract_yt_compact(text)
     if 'jarvis-img-wrap' in text or 'mia-img-wrap' in text:
         m = re.search(r'(?:jarvis-img-caption|mia-img-caption)[^>]*>🎨\s*(.*?)(?:\s*✨\s*)?</span>', text)
         caption = m.group(1).strip() if m else "generated image"
@@ -2857,22 +2879,37 @@ def sf_generate():
     prompt = data.get("prompt", "").strip()
     if not prompt:
         return jsonify({"error": "No prompt provided"}), 400
-    HF_API_KEY = os.environ.get("HF_API_KEY", "")
-    if not HF_API_KEY:
+    hf_keys = []
+    pk = os.environ.get("HF_API_KEY", "")
+    if pk:
+        hf_keys.append(pk)
+    i = 2
+    while True:
+        k = os.environ.get(f"HF_API_KEY_{i}", "")
+        if not k:
+            break
+        hf_keys.append(k)
+        i += 1
+    if not hf_keys:
         return jsonify({"error": "Image generation not configured"}), 500
-    try:
-        resp = requests.post(
-            "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-            headers={"Authorization": f"Bearer {HF_API_KEY}"},
-            json={"inputs": prompt},
-            timeout=60
-        )
-        resp.raise_for_status()
-        img_b64 = _b64.b64encode(resp.content).decode("utf-8")
-        image_url = f"data:image/jpeg;base64,{img_b64}"
-        return jsonify({"image_url": image_url})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    last_err = "Unknown error"
+    for idx, key in enumerate(hf_keys, 1):
+        try:
+            resp = requests.post(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+                headers={"Authorization": f"Bearer {key}"},
+                json={"inputs": prompt},
+                timeout=60
+            )
+            if resp.status_code == 200 and resp.content:
+                img_b64 = _b64.b64encode(resp.content).decode("utf-8")
+                return jsonify({"image_url": f"data:image/jpeg;base64,{img_b64}"})
+            last_err = f"status {resp.status_code}"
+            print(f"[sf_generate] key #{idx} failed: {last_err}")
+        except Exception as e:
+            last_err = str(e)
+            print(f"[sf_generate] key #{idx} exception: {e}")
+    return jsonify({"error": last_err}), 500
 
 @app.route("/debug_wiki")
 def debug_wiki():

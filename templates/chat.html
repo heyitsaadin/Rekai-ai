@@ -1927,11 +1927,35 @@
             if (rawText.startsWith('[IMAGE ANALYSIS RESULT]\n')) {
                 rawText = rawText.slice('[IMAGE ANALYSIS RESULT]\n'.length);
             }
-            // Compact placeholder for YouTube video
+            // Compact placeholder for YouTube video — reconstruct a thumbnail card
             if (rawText.startsWith('[YOUTUBE VIDEO:')) {
-                const ytTitle = rawText.replace('[YOUTUBE VIDEO:', '').replace(/\]$/, '').trim();
-                const safeQ = encodeURIComponent(ytTitle);
-                text.innerHTML = `<a href="https://www.youtube.com/results?search_query=${safeQ}" target="_blank" style="font-size:13px;color:#ef4444;font-weight:600;text-decoration:none;">▶ ${ytTitle} — tap to watch on YouTube</a>`;
+                const inner = rawText.replace('[YOUTUBE VIDEO:', '').replace(/\]$/, '').trim();
+                const parts = inner.split(' | ');
+                const ytTitle = parts[0].trim();
+                const vidId = parts[1] ? parts[1].trim() : '';
+                const channel = parts[2] ? parts[2].trim() : '';
+                if (vidId && vidId.length === 11) {
+                    const thumb = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`;
+                    const watchUrl = `https://www.youtube.com/watch?v=${vidId}`;
+                    text.innerHTML = `<a href="${watchUrl}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;max-width:360px;">
+                        <div class="jarvis-yt-wrap" style="cursor:pointer;">
+                            <div style="position:relative;border-radius:8px;overflow:hidden;background:#000;">
+                                <img src="${thumb}" alt="${ytTitle}" style="width:100%;display:block;border-radius:8px;" />
+                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+                                </div>
+                            </div>
+                            <div class="jarvis-yt-footer" style="padding:6px 2px 2px;">
+                                <span class="jarvis-yt-title">&#9658; ${ytTitle}</span>
+                                ${channel ? `<span class="jarvis-yt-channel">${channel}</span>` : ''}
+                            </div>
+                        </div>
+                    </a>`;
+                } else {
+                    // Fallback: no video ID stored (old saved chats) — show search link
+                    const safeQ = encodeURIComponent(ytTitle);
+                    text.innerHTML = `<a href="https://www.youtube.com/results?search_query=${safeQ}" target="_blank" class="jarvis-yt-link" style="font-size:13px;color:#ef4444;font-weight:600;text-decoration:none;">&#9658; ${ytTitle} — tap to watch on YouTube</a>`;
+                }
                 row.appendChild(text);
                 row.appendChild(makeActionBar(text));
                 return row;
@@ -1950,7 +1974,14 @@
                         img.parentNode.insertBefore(skel, img);
                         img.style.display = 'none';
                         img.addEventListener('load', () => { skel.remove(); img.style.display = ''; img.classList.add('loaded'); });
-                        img.addEventListener('error', () => { skel.remove(); img.style.display = ''; });
+                        img.addEventListener('error', () => {
+                            skel.remove();
+                            img.style.display = 'none';
+                            const errDiv = document.createElement('div');
+                            errDiv.style.cssText = 'padding:12px 14px;background:var(--bg-secondary,#1a1a1a);border-radius:10px;font-size:13px;color:var(--text-muted,#888);';
+                            errDiv.innerHTML = `🎨 <em>${imgPrompt}</em><br><span style="color:var(--text-muted,#666);font-size:12px;">Image not available — was generated live and can't be stored. <a href="#" style="color:#6366f1;text-decoration:none;" onclick="event.preventDefault();navigator.clipboard&&navigator.clipboard.writeText('Generate an image of ${imgPrompt.replace(/'/g,"\\'")}')">Copy prompt</a></span>`;
+                            img.parentNode.insertBefore(errDiv, img);
+                        });
                     }
                 });
                 row.appendChild(text);
