@@ -899,8 +899,12 @@ def generate_image_nvidia(prompt):
 def wikipedia_search(query):
     """Wikipedia search — free, no API key needed. Returns list of results or None."""
     try:
+        headers = {
+            "User-Agent": "JarvisAI/1.0 (https://heyitsaadin-jarvis-ai.vercel.app/; contact@heyitsaadin.me)"
+        }
         search_resp = requests.get(
             "https://en.wikipedia.org/w/api.php",
+            headers=headers,
             params={
                 "action": "query",
                 "list": "search",
@@ -2929,8 +2933,12 @@ def debug_wiki():
     if not session.get("admin"):
         return "forbidden", 403
     try:
+        headers = {
+            "User-Agent": "JarvisAI/1.0 (https://heyitsaadin-jarvis-ai.vercel.app/; contact@heyitsaadin.me)"
+        }
         resp = requests.get(
             "https://en.wikipedia.org/w/api.php",
+            headers=headers,
             params={"action": "query", "list": "search", "srsearch": "Kerala", "format": "json", "srlimit": 2},
             timeout=10
         )
