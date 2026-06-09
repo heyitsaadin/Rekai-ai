@@ -1,0 +1,3006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('jarvis-dark');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.body.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    
+    <title>Jarvis AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #fbfbfa;
+            --text-primary: #181816;
+            --text-secondary: #706f6c;
+            --ui-accent: #181816;
+            --ui-subtle: #f0f0ee;
+            --user-bubble: #f0f0ee;
+            --sidebar-width: 290px;
+            --radius-pill: 9999px;
+            --transition-smooth: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            /* keep old color names for JS-shared logic */
+            --tan: #f5e3b0;
+            --white: #ffffff;
+            --bg: var(--bg-primary);
+            --dark: var(--text-primary);
+            --red: #ef4444;
+            --mid: var(--text-secondary);
+            --light: var(--ui-subtle);
+            --code-bg: #1e1e2e;
+            --code-fg: #cdd6f4;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0a0a0a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #8a8a8a;
+            --ui-accent: #f5f5f5;
+            --ui-subtle: #1a1a1a;
+            --user-bubble: #1f1f1f;
+
+            --white: #111111;
+            --bg: #0a0a0a;
+            --dark: #f5f5f5;
+            --mid: #8a8a8a;
+            --light: #1a1a1a;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button, textarea { outline: none; border: none; background: none; }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            transition: background-color 0.25s;
+        }
+
+        /* ════════════════════════════════
+           MESSAGE BUBBLES (old logic)
+        ════════════════════════════════ */
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 28px;
+            animation: slideUpFade 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+            width: 100%;
+        }
+        .message-row.msg-enter { animation: msgBounce .38s cubic-bezier(.22,1,.36,1) both; }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes msgBounce {
+            0%   { opacity:0; transform:translateY(8px) scale(.97); }
+            60%  { transform:translateY(-2px) scale(1.01); }
+            100% { opacity:1; transform:translateY(0) scale(1); }
+        }
+
+        .meta-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        /* AI bubble */
+        .message-row.ai { align-items: flex-start; }
+        .message-row.ai .message-text {
+            color: var(--text-primary);
+            max-width: 88%;
+            width: fit-content;
+            font-size: 14.5px;
+            line-height: 1.65;
+            word-break: break-word;
+        }
+        .message-row.ai .message-text p            { margin-bottom: 4px; }
+        .message-row.ai .message-text p:last-child  { margin-bottom: 0; }
+        .message-row.ai .message-text strong        { font-weight: 700; }
+        .message-row.ai .message-text ul,
+        .message-row.ai .message-text ol            { padding-left: 18px; margin: 6px 0; }
+        .message-row.ai .message-text li            { margin-bottom: 4px; }
+        .message-row.ai .message-text h1,
+        .message-row.ai .message-text h2,
+        .message-row.ai .message-text h3            { font-size: 14px; font-weight: 700; margin: 10px 0 4px; }
+        .message-row.ai .message-text code          { background: rgba(0,0,0,.07); border-radius: 4px; padding: 1px 5px; font-family: 'Courier New', monospace; font-size: 13px; color: #c0392b; }
+        [data-theme="dark"] .message-row.ai .message-text code { background: rgba(255,255,255,.08); color: #f87171; }
+        .message-row.ai .message-text pre           { background: var(--code-bg); border-radius: 10px; padding: 12px 14px; margin: 8px 0; overflow-x: auto; position: relative; }
+        .message-row.ai .message-text pre code      { background: none; color: var(--code-fg); font-size: 12.5px; padding: 0; line-height: 1.6; white-space: pre; }
+
+        /* Copy button */
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #444; color: #fff; border: none; border-radius: 5px; font-size: 10px; padding: 3px 8px; cursor: pointer; opacity: .7; }
+        .copy-btn:hover { opacity: 1; }
+
+        /* ════════════════════════════════
+           AI MESSAGE ACTION BAR
+        ════════════════════════════════ */
+        .msg-actions {
+            display: flex; align-items: center; gap: 2px;
+            margin-top: 8px;
+            opacity: 1;
+        }
+
+        .msg-action-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: none; border: none; cursor: pointer;
+            color: var(--text-secondary);
+            transition: background 0.15s, color 0.15s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        .msg-action-btn:active { transform: scale(0.88); }
+        .msg-action-btn:hover  { background: var(--ui-subtle); color: var(--text-primary); }
+        .msg-action-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+
+        /* Liked / disliked active states */
+        .msg-action-btn.liked   { color: #10b981; }
+        .msg-action-btn.liked svg { fill: #10b981; stroke: #10b981; }
+        .msg-action-btn.disliked { color: #ef4444; }
+        .msg-action-btn.disliked svg { fill: #ef4444; stroke: #ef4444; }
+
+        /* Speaking active state */
+        .msg-action-btn.speaking { color: #6366f1; background: rgba(99,102,241,0.1); }
+        .msg-action-btn.speaking svg { stroke: #6366f1; }
+
+        /* Copied flash */
+        .msg-action-btn.copied { color: #10b981; }
+
+        /* Pop animation on click */
+        @keyframes actionPop {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.32); }
+            100% { transform: scale(1); }
+        }
+        .msg-action-btn.pop { animation: actionPop 0.28s cubic-bezier(.22,1,.36,1) both; }
+
+        /* User bubble */
+        .message-row.user { align-items: flex-end; }
+        .message-row.user .message-text {
+            background-color: var(--user-bubble);
+            color: var(--text-primary);
+            padding: 11px 17px;
+            border-radius: 22px 22px 4px 22px;
+            max-width: 78%;
+            font-size: 14.5px;
+            line-height: 1.55;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        /* ── Typing indicator — two-phase dot animation ── */
+        .typing-bubble {
+            display: none;
+            align-self: flex-start;
+            margin-bottom: 12px;
+            animation: slideUpFade .25s cubic-bezier(.4,0,.2,1) both;
+        }
+        .typing-dots-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px; height: 44px;
+            position: relative;
+        }
+        /* Phase 1: single breathing dot */
+        .dot-main {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            animation: dotMainPulse 0.9s ease-in-out infinite;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        @keyframes dotMainPulse {
+            0%, 100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.85; }
+            50%       { transform: translate(-50%,-50%) scale(1.5);  opacity: 1;    }
+        }
+        .typing-bubble.phase-think .dot-main {
+            opacity: 0; transform: translate(-50%,-50%) scale(0.1); animation: none;
+        }
+        /* Phase 2: 3 orbiting micro-dots */
+        .gpt-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .typing-bubble.phase-think .gpt-ring { opacity: 1; }
+        .gpt-dot {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--text-primary);
+            margin: -2.5px 0 0 -2.5px;
+        }
+        .gpt-dot:nth-child(1) { width:5px; height:5px; animation: orbit1 1.1s cubic-bezier(.45,.05,.55,.95) infinite, wobble1 2.3s ease-in-out infinite; }
+        .gpt-dot:nth-child(2) { width:4px; height:4px; animation: orbit2 0.85s cubic-bezier(.45,.05,.55,.95) infinite, wobble2 1.9s ease-in-out infinite; }
+        .gpt-dot:nth-child(3) { width:5px; height:5px; animation: orbit3 1.4s cubic-bezier(.45,.05,.55,.95) infinite reverse, wobble3 2.6s ease-in-out infinite; }
+        @keyframes orbit1 {
+            0%   { transform: translate(  0px, -13px); opacity:1;   }
+            25%  { transform: translate( 12px,   0px); opacity:0.6; }
+            50%  { transform: translate(  0px,  11px); opacity:1;   }
+            75%  { transform: translate(-12px,   0px); opacity:0.5; }
+            100% { transform: translate(  0px, -13px); opacity:1;   }
+        }
+        @keyframes orbit2 {
+            0%   { transform: translate(  9px,  -8px); opacity:0.7; }
+            33%  { transform: translate( -6px,  10px); opacity:1;   }
+            66%  { transform: translate( -9px,  -7px); opacity:0.5; }
+            100% { transform: translate(  9px,  -8px); opacity:0.7; }
+        }
+        @keyframes orbit3 {
+            0%   { transform: translate( -8px,  -9px); opacity:0.5; }
+            40%  { transform: translate( 10px,   5px); opacity:1;   }
+            80%  { transform: translate(  3px, -12px); opacity:0.7; }
+            100% { transform: translate( -8px,  -9px); opacity:0.5; }
+        }
+        @keyframes wobble1 { 0%,100%{width:5px;height:5px;} 50%{width:7px;height:7px;} }
+        @keyframes wobble2 { 0%,100%{width:4px;height:4px;} 50%{width:6px;height:6px;} }
+        @keyframes wobble3 { 0%,100%{width:5px;height:5px;} 50%{width:4px;height:4px;} }
+        /* Keep shimmer wrap hidden — stopTypingPhase still references it */
+        .typing-shimmer-wrap { display: none !important; }
+
+        /* ════════════════════════════════
+           IMAGE GENERATION STYLES (old)
+        ════════════════════════════════ */
+        @property --ring-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+        @keyframes ring-spin { to { --ring-angle: 360deg; } }
+        @keyframes ring-glow-pulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+        @keyframes gooeyPop {
+            0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+            60%  { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.2); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)*1.4), calc(-50% + var(--ty)*1.4)) scale(0); opacity: 0; }
+        }
+        @property --pdf-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+        @keyframes pdf-ring-spin { to { --pdf-angle: 360deg; } }
+
+        /* old tray chip CSS removed */
+
+        /* Generated image bubble */
+        .jarvis-img-skeleton {
+            width: 100%; aspect-ratio: 1/1; max-width: 340px; border-radius: 12px;
+            background: linear-gradient(90deg, var(--ui-subtle) 25%, var(--bg-primary) 50%, var(--ui-subtle) 75%);
+            background-size: 200% 100%; animation: shimmer 1.4s infinite;
+            position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+        .jarvis-img-spinner {
+            width: 40px; height: 40px; border: 3px solid rgba(99,102,241,.2);
+            border-top-color: #6366f1; border-radius: 50%;
+            animation: imgSpin 0.9s linear infinite; position: absolute;
+        }
+        @keyframes imgSpin { to { transform: rotate(360deg); } }
+        .jarvis-img-gen-label {
+            position: absolute; bottom: 18px; left: 0; right: 0;
+            text-align: center; font-size: 11px; font-weight: 700;
+            color: #6b7280; letter-spacing: .5px;
+        }
+        .jarvis-img-wrap {
+            display: block;
+            max-width: min(260px, 100%);
+            width: fit-content;
+            background: var(--ui-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.10);
+        }
+        .jarvis-img { 
+            width: 100%; 
+            height: auto; 
+            border-radius: 0; 
+            display: block; 
+            transition: opacity .4s ease;
+            background-color: var(--ui-subtle);
+        }
+        /* Ensure image is visible if already cached or if JS fails */
+        .jarvis-img:not([src]), .jarvis-img[src=""] { opacity: 0; }
+        .jarvis-img.loaded { opacity: 1; }
+        .jarvis-img-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; gap: 8px; background: var(--ui-subtle); }
+        .jarvis-img-caption { font-size: 11px; color: var(--text-secondary); font-style: italic; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .jarvis-img-dl {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700; color: var(--bg-primary);
+            cursor: pointer; padding: 7px 14px;
+            background: var(--text-primary);
+            border: none; border-radius: 20px;
+            transition: opacity .15s, transform .1s; flex-shrink: 0;
+        }
+        .jarvis-img-dl:hover { opacity: .8; transform: scale(1.04); }
+        .jarvis-img-dl svg { flex-shrink: 0; }
+
+        /* ════════════════════════════════
+           WEB SEARCH RESULTS
+        ════════════════════════════════ */
+        .wsearch-wrap {
+            max-width: 340px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--ui-subtle);
+            margin: 4px 0;
+            border: 1px solid rgba(128,128,128,.15);
+        }
+        .wsearch-header {
+            padding: 9px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(128,128,128,.12);
+            background: var(--bg-primary);
+        }
+        .wsearch-results { display: flex; flex-direction: column; }
+        .wsearch-result {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 9px 12px;
+            border-bottom: 1px solid rgba(128,128,128,.1);
+            text-decoration: none;
+            transition: background .15s;
+        }
+        .wsearch-result:last-child { border-bottom: none; }
+        .wsearch-result:hover, .wsearch-result:active { background: rgba(128,128,128,.08); }
+        .wsearch-title {
+            font-size: 12.5px; font-weight: 600;
+            color: #4f8ef7;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .wsearch-snippet {
+            font-size: 11.5px; color: var(--text-primary);
+            line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .wsearch-url {
+            font-size: 10px; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* ════════════════════════════════
+           YOUTUBE PLAYER
+        ════════════════════════════════ */
+        .jarvis-yt-wrap {
+            max-width: 340px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #000;
+            margin: 2px 0;
+        }
+        .jarvis-yt-player {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+        }
+        .jarvis-yt-player iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+        .jarvis-yt-footer {
+            padding: 8px 10px;
+            background: var(--ui-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .jarvis-yt-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .jarvis-yt-channel {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        .jarvis-yt-fallback { background: var(--ui-subtle); padding: 12px; }
+        .jarvis-yt-link {
+            font-size: 13px; font-weight: 600;
+            color: #ef4444; text-decoration: none;
+        }
+        .jarvis-yt-link:hover { text-decoration: underline; }
+
+        /* ════════════════════════════════
+           IMAGE PREVIEW
+        ════════════════════════════════ */
+        .img-preview-wrap {
+            display: none; align-items: center; gap: 8px;
+            background: var(--bg-primary); border: 1px solid var(--ui-subtle);
+            border-radius: 12px; padding: 7px 10px; margin-bottom: 6px;
+        }
+        .img-preview-wrap.show { display: flex; }
+        .img-preview-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 7px; flex-shrink: 0; }
+        .img-preview-name  { flex: 1; font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .img-preview-remove { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 16px; line-height: 1; padding: 0 2px; }
+        .img-preview-remove:hover { color: #ef4444; }
+
+        /* ════════════════════════════════
+           SIDEBAR OVERLAY (new design)
+        ════════════════════════════════ */
+        .backdrop-blur {
+            position: fixed; inset: 0;
+            background-color: rgba(0,0,0,.08);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0; pointer-events: none; z-index: 85;
+            transition: opacity 0.3s ease;
+        }
+        [data-theme="dark"] .backdrop-blur { background-color: rgba(0,0,0,.45); }
+        .backdrop-blur.active { opacity: 1; pointer-events: auto; }
+
+        .sidebar-overlay {
+            position: fixed; top: 0; left: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width); height: 100%;
+            background-color: var(--bg-primary);
+            box-shadow: 10px 0 40px rgba(0,0,0,.08);
+            border-right: 1px solid var(--ui-subtle);
+            z-index: 90; padding: 0;
+            display: flex; flex-direction: column;
+            transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+        .sidebar-overlay.active { left: 0; }
+
+        /* Drawer pages (old structure preserved) */
+        .drawer-pages { flex: 1; display: flex; overflow: hidden; position: relative; }
+        .drawer-page {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            overflow-y: auto; padding: 20px 16px;
+            transform: translateX(0);
+            transition: transform .32s cubic-bezier(.22,1,.36,1);
+        }
+        .drawer-page::-webkit-scrollbar { display: none; }
+        .drawer-page.slide-out { transform: translateX(-100%); }
+        .drawer-page.slide-in  { transform: translateX(100%); }
+
+        /* Sidebar top header */
+        .sidebar-header {
+            display: flex; justify-content: flex-end; align-items: center;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid var(--ui-subtle);
+            flex-shrink: 0;
+        }
+        .sidebar-close {
+            width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); transition: background .15s, transform .15s;
+        }
+        .sidebar-close:hover { background: var(--ui-subtle); transform: rotate(90deg); }
+
+        /* d-items in sidebar (old style, new colors) */
+        .d-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 10px; border-radius: 10px;
+            font-size: 14px; color: var(--text-primary);
+            text-decoration: none; cursor: pointer;
+            border: none; background: none; width: 100%; text-align: left;
+            transition: background .15s;
+        }
+        .d-item:hover { background: var(--ui-subtle); transform: translateX(5px); }
+        .d-item { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .d-icon { width: 18px; height: 18px; flex-shrink: 0; stroke: var(--text-secondary); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .chat-btn, .send-btn, .action-btn, .icon-btn, .msg-action-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chat-btn:active, .send-btn:active, .action-btn:active, .icon-btn:active, .msg-action-btn:active { transform: scale(0.92); }
+        .message-row { transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .message-row:hover { transform: translateX(2px); }
+        .d-item.new-chat { font-weight: 600; }
+        .d-item.new-chat .d-icon { stroke: var(--text-primary); }
+        .d-divider { border: none; border-top: 1px solid var(--ui-subtle); margin: 5px 0; }
+
+        /* dark toggle inside sidebar */
+        .d-toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 11px 10px; border-radius: 10px;
+            font-size: 14px; color: var(--text-primary);
+            cursor: pointer; transition: background .15s;
+        }
+        .d-toggle-row:hover { background: var(--ui-subtle); }
+        .d-toggle-left { display: flex; align-items: center; gap: 12px; }
+        .toggle-pill {
+            width: 36px; height: 20px; border-radius: 10px;
+            background: var(--ui-subtle); border: none; cursor: pointer;
+            position: relative; transition: background .2s; flex-shrink: 0;
+        }
+        .toggle-pill::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        .toggle-pill.on { background: var(--text-primary); }
+        .toggle-pill.on::after { transform: translateX(16px); }
+
+        /* Settings user card */
+        .d-settings-user-card {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--ui-subtle); border-radius: 14px;
+            padding: 14px 16px; margin: 2px 0 14px;
+            border: 1px solid rgba(0,0,0,.06);
+        }
+        [data-theme="dark"] .d-settings-user-card { border-color: rgba(255,255,255,.06); }
+        .d-settings-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: #f5e3b0; display: flex; align-items: center; justify-content: center;
+            font-size: 17px; font-weight: 800; color: #374151; flex-shrink: 0;
+        }
+        .d-settings-uname { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .d-settings-role  { font-size: 11px; color: var(--text-secondary); letter-spacing: .3px; margin-top: 1px; }
+
+        /* Section label */
+        .d-section-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+            color: var(--text-secondary); padding: 0 10px; margin: 2px 0 8px;
+        }
+
+        /* Form inputs inside drawer */
+        .d-form-group { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+        .d-input {
+            width: 100%; padding: 12px 14px;
+            background: var(--ui-subtle); border: 1.5px solid transparent;
+            border-radius: 12px; font-size: 14px; color: var(--text-primary);
+            font-family: inherit; outline: none;
+            transition: border-color .15s, background .15s;
+        }
+        .d-input:focus { border-color: var(--text-primary); background: var(--bg-primary); }
+        .d-input::placeholder { color: var(--text-secondary); }
+
+        .d-form-msg {
+            font-size: 12px; padding: 0 2px; min-height: 14px;
+            color: var(--text-secondary); transition: color .15s;
+        }
+        .d-form-msg.ok  { color: #10b981; }
+        .d-form-msg.err { color: #ef4444; }
+
+        .d-action-btn {
+            width: 100%; padding: 13px;
+            background: var(--text-primary); color: var(--bg-primary);
+            border: none; border-radius: 12px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: opacity .15s, transform .1s;
+            font-family: inherit;
+        }
+        .d-action-btn:hover   { opacity: .85; }
+        .d-action-btn:active  { transform: scale(.98); }
+        .d-action-btn.danger  { background: #ef4444; color: #fff; }
+        .d-action-btn:disabled { opacity: .5; pointer-events: none; }
+
+        /* Danger card */
+        .d-danger-card {
+            background: #fff0f0; border: 1.5px solid #fca5a5;
+            border-radius: 14px; padding: 16px; margin-bottom: 8px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+        }
+        [data-theme="dark"] .d-danger-card { background: #1f0a0a; border-color: #7f1d1d; }
+        .d-danger-card p { font-size: 13px; color: #b91c1c; line-height: 1.55; }
+        [data-theme="dark"] .d-danger-card p { color: #f87171; }
+
+        /* Danger / logout */
+        .d-item.danger { color: var(--red); }
+        .d-item.danger .d-icon { stroke: var(--red); }
+        .d-item.danger:hover { background: #fee2e2; }
+        [data-theme="dark"] .d-item.danger:hover { background: #2a1010; }
+
+        /* Back button */
+        .d-back {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-radius: 10px;
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            border: none; background: none; cursor: pointer;
+            margin-bottom: 6px; width: 100%; text-align: left;
+            transition: background .15s;
+        }
+        .d-back:hover { background: var(--ui-subtle); color: var(--text-primary); }
+
+        /* Info card */
+        .d-card {
+            background: var(--ui-subtle); border-radius: 14px;
+            padding: 18px 16px; margin: 4px 0 10px;
+            border: 1px solid rgba(0,0,0,.06);
+        }
+        [data-theme="dark"] .d-card { border-color: rgba(255,255,255,.06); }
+        .d-card-icon {
+            width: 42px; height: 42px; background: #f5e3b0; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+        }
+        .d-card h3    { font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 2px; }
+        .d-card .ver  { font-size: 10px; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 12px; }
+        .d-card p     { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
+        .d-card .tag  { font-size: 10px; color: var(--text-secondary); letter-spacing: .5px; margin-top: 10px; }
+        .d-card .tag span { color: var(--text-primary); font-weight: 700; }
+
+        /* Chat history list */
+        .d-chat-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+        .d-chat-card {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: var(--ui-subtle);
+            border: 1px solid rgba(0,0,0,.06);
+            border-radius: 12px; padding: 10px 12px;
+            transition: background .15s;
+        }
+        [data-theme="dark"] .d-chat-card { border-color: rgba(255,255,255,.06); }
+        .d-chat-card:hover { background: var(--light); }
+        .d-chat-card a.d-chat-link {
+            flex: 1; min-width: 0;
+            text-decoration: none; overflow: hidden; line-height: 1.4;
+        }
+        .d-chat-link-title {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .d-chat-link-title.active { font-weight: 700; }
+        .d-chat-link-title.active::before { content: '● '; color: #10b981; font-size: 9px; vertical-align: middle; }
+        .d-chat-link-date {
+            display: block; font-size: 10px;
+            color: var(--text-secondary); margin-top: 3px;
+        }
+        .d-chat-del {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: #fee2e2; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; color: var(--red);
+            margin-top: 1px;
+            transition: background .15s, transform .1s;
+        }
+        .d-chat-del:hover { background: #fca5a5; transform: scale(1.08); }
+        [data-theme="dark"] .d-chat-del { background: #2a1010; }
+        [data-theme="dark"] .d-chat-del:hover { background: #3d1515; }
+        .d-chat-pin {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: transparent;
+            border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, transform 0.15s;
+            color: var(--text-secondary);
+        }
+        .d-chat-pin:hover { background: #fef3c7; transform: scale(1.08); color: #f59e0b; }
+        [data-theme="dark"] .d-chat-pin:hover { background: #2a2010; }
+        .d-chat-card.pinned { border-left: 3px solid #f59e0b; }
+        [data-theme="dark"] .d-chat-card.pinned { border-left-color: #d97706; }
+        .d-clear-btn:hover { background: rgba(239,68,68,.18); }
+        .d-empty { font-size: 12px; color: var(--text-secondary); padding: 12px 4px; text-align: center; }
+
+        .d-chats-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; flex-shrink: 0; min-height: 36px;
+            width: 100%; overflow: hidden;
+        }
+        .d-chats-header .d-back { margin-bottom: 0; flex-shrink: 0; }
+        .d-clear-btn {
+            display: flex; align-items: center; gap: 5px;
+            background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
+            border-radius: 8px; padding: 6px 10px;
+            font-size: 11px; font-weight: 700; color: var(--red);
+            cursor: pointer; transition: background .15s;
+            flex-shrink: 0; white-space: nowrap;
+        }
+
+        /* Drawer user footer */
+        .drawer-footer {
+            padding: 10px 16px 18px;
+            border-top: 1px solid var(--ui-subtle);
+            flex-shrink: 0;
+        }
+        .drawer-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; }
+        .drawer-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: #f5e3b0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; color: #374151; flex-shrink: 0;
+        }
+        .drawer-uname { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .drawer-role  { font-size: 10px; color: var(--text-secondary); letter-spacing: .4px; }
+
+        /* Logout spinner */
+        @keyframes logoutSpin { to { transform: rotate(360deg); } }
+        .logout-spinner {
+            display: none; width: 13px; height: 13px;
+            border: 2px solid rgba(239,68,68,.25);
+            border-top-color: var(--red); border-radius: 50%;
+            animation: logoutSpin .7s linear infinite; flex-shrink: 0;
+        }
+        .d-item.danger.loading { pointer-events: none; opacity: .65; }
+        .d-item.danger.loading .logout-spinner { display: inline-block; }
+
+        /* ════════════════════════════════
+           CHAT CONTAINER (new layout)
+        ════════════════════════════════ */
+        .chat-container {
+            width: 100%; max-width: 720px; height: 100%;
+            display: flex; flex-direction: column;
+            position: relative; padding: 0 16px;
+        }
+
+        /* ════ HEADER ════ */
+        .chat-header {
+            padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: transparent !important;
+            border-bottom: none;
+            pointer-events: none;
+        }
+        /* buttons need pointer events back */
+        .chat-header > * { pointer-events: auto; }
+        .chat-header::before, .chat-header::after { display: none !important; }
+
+        /* Back button */
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-primary); text-decoration: none;
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0,0,0,0.07);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            transition: transform .15s, background .15s;
+        }
+        /* Instantly hide back button when sidebar is open */
+        body.menu-open .back-btn {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        /* Push entire header behind the backdrop when menu is open */
+        body.menu-open .chat-header {
+            z-index: 80 !important;
+        }
+        body.menu-open .header-right {
+            opacity: 0.25;
+            filter: blur(3px);
+            pointer-events: none;
+            transition: opacity .25s, filter .25s;
+        }
+        .back-btn:active { transform: scale(0.92); }
+        [data-theme="dark"] .back-btn {
+            background: rgba(40,40,40,0.72);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+        }
+
+        /* Right cluster pill */
+        .header-right {
+            display: flex; align-items: center;
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0,0,0,0.07);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border-radius: 999px; overflow: hidden;
+            height: 40px;
+        }
+        [data-theme="dark"] .header-right {
+            background: rgba(40,40,40,0.72);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+        }
+
+        .header-icon-btn {
+            width: 44px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-primary);
+            background: none; border: none;
+            transition: background .15s;
+            position: relative; overflow: hidden;
+        }
+        .header-icon-btn:active { background: rgba(255,255,255,0.12); }
+        .header-icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .header-divider { width: 1px; height: 22px; background: rgba(0,0,0,0.1); flex-shrink: 0; }
+        [data-theme="dark"] .header-divider { background: rgba(255,255,255,0.15); }
+
+        /* Hamburger lines inside pill */
+        .menu-toggle {
+            cursor: pointer; width: 44px; height: 40px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            gap: 5px; color: var(--text-primary);
+            background: none; border: none;
+            position: relative; overflow: hidden;
+        }
+        .menu-toggle span {
+            display: block; height: 2px; background-color: currentColor;
+            border-radius: 2px; width: 18px;
+            transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .2s, width .2s;
+        }
+        .menu-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .menu-toggle.open span:nth-child(2) { opacity: 0; width: 0; }
+        .menu-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        .ham-ripple {
+            position: absolute; border-radius: 50%;
+            background: rgba(255,255,255,0.15); pointer-events: none;
+            transform: scale(0); animation: hamRipple .5s ease-out forwards;
+        }
+        @keyframes hamRipple { to { transform: scale(4); opacity: 0; } }
+
+        /* Edit dropdown menu */
+        .edit-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 16px;
+            min-width: 220px;
+            background: #1c1c1e; border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+            z-index: 200;
+            opacity: 0; transform: scale(0.92) translateY(-8px); pointer-events: none;
+            transform-origin: top right;
+            transition: opacity .18s cubic-bezier(.2,.8,.2,1), transform .18s cubic-bezier(.2,.8,.2,1);
+        }
+        [data-theme="light"] .edit-dropdown { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.1); }
+        .edit-dropdown.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: all; }
+        .edit-dropdown-label {
+            padding: 12px 16px 8px;
+            font-size: 12px; color: #8e8e93; font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        .edit-dropdown-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 13px 16px; width: 100%; text-align: left;
+            background: none; border: none; cursor: pointer;
+            color: #f5f5f5; font-size: 15px; font-weight: 400;
+            transition: background .1s; text-decoration: none;
+        }
+        [data-theme="light"] .edit-dropdown-item { color: #1c1c1e; }
+        .edit-dropdown-item:active { background: rgba(255,255,255,0.08); }
+        [data-theme="light"] .edit-dropdown-item:active { background: rgba(0,0,0,0.05); }
+        .edit-dropdown-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; opacity: 0.85; }
+        .edit-dropdown-item.danger { color: #ff453a; }
+        .edit-dropdown-item.danger svg { opacity: 1; }
+        .edit-dropdown-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 2px 0; }
+        [data-theme="light"] .edit-dropdown-sep { background: rgba(0,0,0,0.08); }
+        /* Dropdown backdrop */
+        .edit-dropdown-backdrop {
+            position: fixed; inset: 0; z-index: 199;
+            display: none;
+        }
+        .edit-dropdown-backdrop.open { display: block; }
+
+        /* Message stream */
+        .message-stream {
+            flex: 1; overflow-y: auto;
+            padding: 72px 4px 200px 4px;
+            scroll-behavior: smooth;
+        }
+        .message-stream::-webkit-scrollbar { width: 0; background: transparent; }
+
+        /* ════════════════════════════════
+           DOCK (new design)
+        ════════════════════════════════ */
+        .dock-wrapper {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 16px 16px 20px;
+            background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
+            display: flex; flex-direction: column; gap: 8px; z-index: 20;
+        }
+
+        /* ── Tray backdrop ── */
+        .tray-backdrop {
+            position: fixed; inset: 0; z-index: 110;
+            background: rgba(0,0,0,0);
+            pointer-events: none;
+            transition: background 0.3s ease;
+        }
+        .tray-backdrop.active {
+            background: rgba(0,0,0,0.45);
+            pointer-events: auto;
+        }
+        [data-theme="dark"] .tray-backdrop.active { background: rgba(0,0,0,0.65); }
+
+        /* ── Bottom sheet tray ── */
+        .tools-tray {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 120;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-radius: 32px 32px 0 0;
+            overflow: hidden;
+            padding-top: 12px;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+            transform: translateY(110%);
+            transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -4px 40px rgba(0,0,0,0.15);
+        }
+        [data-theme="dark"] .tools-tray {
+            background: #1c1c1e;
+            box-shadow: 0 -4px 48px rgba(0,0,0,0.7);
+        }
+        .tools-tray::before {
+            content: '';
+            display: block;
+            width: 36px; height: 4px;
+            background: #c7c7cc;
+            border-radius: 2px;
+            margin: 0 auto 14px;
+        }
+        [data-theme="dark"] .tools-tray::before { background: #48484a; }
+        .tools-tray.active { transform: translateY(0); }
+
+        /* Hide header when tray open */
+        body.tray-open .chat-header {
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Top icon row */
+        .tray-icon-row {
+            display: flex;
+            gap: 12px;
+            padding: 0 16px 16px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tray-icon-row::-webkit-scrollbar { display: none; }
+        .tray-icon-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            flex-shrink: 0;
+            background: none; border: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent; padding: 0;
+        }
+        .tray-icon-box {
+            width: 64px; height: 64px;
+            background: var(--ui-subtle);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .13s, transform .1s;
+        }
+        [data-theme="dark"] .tray-icon-box { background: #2c2c2e; }
+        .tray-icon-btn:active .tray-icon-box { transform: scale(0.94); }
+        .tray-icon-box svg { width: 26px; height: 26px; stroke: var(--text-primary); fill: none; stroke-width: 1.7px; stroke-linecap: round; stroke-linejoin: round; }
+        .tray-icon-label { font-size: 12px; font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+
+        /* Divider */
+        .tray-divider { height: 1px; background: var(--ui-subtle); margin: 0 0 4px; }
+
+        /* List rows */
+        .tray-list-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 15px 20px;
+            background: none; border: none; cursor: pointer;
+            width: 100%; text-align: left;
+            color: var(--text-primary);
+            -webkit-tap-highlight-color: transparent;
+            transition: background .13s;
+            position: relative;
+        }
+        .tray-list-item:not(:last-child)::after {
+            content: ''; position: absolute; bottom: 0; left: 20px; right: 20px;
+            height: 1px; background: var(--ui-subtle);
+        }
+        .tray-list-item:active { background: var(--ui-subtle); }
+        .tray-list-icon { width: 24px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .tray-list-icon svg { width: 22px; height: 22px; stroke: var(--text-primary); fill: none; stroke-width: 1.8px; stroke-linecap: round; stroke-linejoin: round; }
+        .tray-list-text { display: flex; flex-direction: column; gap: 2px; }
+        .tray-list-title { font-size: 15px; font-weight: 400; color: var(--text-primary); line-height: 1.3; }
+        .tray-list-sub   { font-size: 12px; color: var(--text-secondary); line-height: 1.3; }
+
+        /* Input dock */
+        .input-dock {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 26px; padding: 7px;
+            display: flex; flex-direction: column; gap: 6px;
+            transition: var(--transition-smooth);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        [data-theme="dark"] .input-dock {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.08);
+        }
+        .input-dock:focus-within {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.18);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        [data-theme="dark"] .input-dock:focus-within {
+            background: rgba(255,255,255,0.07);
+        }
+        .input-row { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+
+        /* Plus button — frosted */
+        .plus-btn {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            width: 38px; height: 38px; border-radius: var(--radius-pill);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-primary);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: var(--transition-bounce); flex-shrink: 0;
+        }
+        .plus-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.18); }
+        .plus-btn:active { transform: scale(0.94); }
+        .plus-btn.rotated { transform: scale(1.02) rotate(135deg); background: var(--text-primary); color: var(--bg-primary); }
+        .plus-btn svg { width: 18px; height: 18px; stroke-width: 2.5px; stroke: currentColor; fill: none; }
+
+        /* Attach button — frosted */
+        .attach-btn {
+            background: rgba(255,255,255,0.12) !important;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            width: 38px; height: 38px; border-radius: var(--radius-pill) !important;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-primary);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: var(--transition-bounce); flex-shrink: 0;
+            position: relative; overflow: hidden;
+        }
+        .attach-btn svg { width: 16px; height: 16px; stroke-width: 2px; stroke: currentColor; fill: none; pointer-events: none; }
+        .attach-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.18) !important; }
+        .attach-btn:active { transform: scale(0.94); }
+        .attach-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+        /* Textarea */
+        .input-row textarea {
+            flex: 1; background: none; resize: none;
+            color: var(--text-primary); font-size: 15px;
+            line-height: 22px; padding: 8px 4px;
+            max-height: 140px; min-height: 38px; height: 38px;
+            font-family: inherit;
+        }
+        .input-row textarea::placeholder { color: var(--text-secondary); }
+
+        /* Send button — solid accent with glow */
+        .submit-btn {
+            background: var(--ui-accent);
+            width: 38px; height: 38px; border-radius: var(--radius-pill);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--bg-primary);
+            opacity: .2; transform: scale(.92); pointer-events: none;
+            transition: var(--transition-smooth); flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .input-dock.has-content .submit-btn { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .submit-btn:active { transform: scale(0.92); }
+        .submit-btn svg { width: 16px; height: 16px; stroke-width: 2.5px; stroke: currentColor; fill: none; }
+
+        /* Footer tag */
+        .dock-footer { text-align: center; font-size: 9px; color: var(--text-secondary); letter-spacing: 1.5px; padding-top: 2px; }
+        .dock-footer span { color: var(--text-primary); font-weight: 700; }
+
+        /* ════════════════════════════════
+           ADMIN NOTIFICATION (old)
+        ════════════════════════════════ */
+        @property --notif-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+        @keyframes notifRingSpin { to { --notif-angle: 360deg; } }
+        @keyframes notifRingPulse { 0%,100%{opacity:.6;} 50%{opacity:1;} }
+        #adminNotifOverlay { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:24px; }
+        .admin-notif-wrap { pointer-events:auto;position:relative;width:min(500px,100%);padding:3px;border-radius:22px;background:conic-gradient(from var(--notif-angle),transparent 0deg,#9ca3af 50deg,#374151 120deg,#d1d5db 180deg,#6b7280 250deg,#1f2937 300deg,transparent 360deg);animation:notifRingSpin 3s linear infinite,notifRingPulse 3s ease-in-out infinite; }
+        .admin-notif-inner { position:relative;background:var(--bg-primary);border-radius:20px;padding:22px 24px 20px;overflow:hidden; }
+        .notif-label { display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px; }
+        .notif-label-dot { width:7px;height:7px;background:var(--text-primary);border-radius:50%;flex-shrink:0;animation:notifDotPulse 2s ease-in-out infinite; }
+        @keyframes notifDotPulse { 0%,100%{box-shadow:0 0 0 0 rgba(55,65,81,.55);}50%{box-shadow:0 0 0 5px rgba(55,65,81,0);} }
+        .notif-title { font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:7px;line-height:1.35; }
+        .notif-body  { font-size:13.5px;color:var(--text-secondary);line-height:1.65; }
+        .notif-progress { margin-top:16px;height:2.5px;background:var(--ui-subtle);border-radius:99px;overflow:hidden; }
+        .notif-progress-bar { height:100%;width:100%;background:linear-gradient(90deg,#9ca3af,#374151);border-radius:99px;transform-origin:left;animation:notifDrain 10s linear forwards; }
+        @keyframes notifDrain { from{transform:scaleX(1);}to{transform:scaleX(0);} }
+        .notif-close { position:absolute;top:14px;right:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--ui-subtle);border:none;border-radius:50%;color:var(--text-secondary);font-size:15px;line-height:1;cursor:pointer;transition:background .15s,transform .15s; }
+        .notif-close:hover { background:var(--light);transform:rotate(90deg); }
+        @keyframes notifPopIn { 0%{opacity:0;transform:scale(.86) translateY(20px);}65%{transform:scale(1.03) translateY(-3px);}100%{opacity:1;transform:scale(1) translateY(0);} }
+        @keyframes notifPopOut { 0%{opacity:1;transform:scale(1) translateY(0);}100%{opacity:0;transform:scale(.91) translateY(14px);} }
+        .admin-notif-wrap { animation:notifPopIn .48s cubic-bezier(.22,1,.36,1) both; }
+
+        /* ════════════════════════════════
+           DESKTOP override  (≥ 700 px)
+        ════════════════════════════════ */
+        @media (min-width: 700px) {
+
+            /* ── Root layout: sidebar + chat side-by-side ── */
+            body {
+                padding: 0;
+                align-items: stretch;
+                flex-direction: row;
+                overflow: hidden;
+            }
+
+            /* ── Sidebar: always-visible left panel ── */
+            .sidebar-overlay {
+                position: relative !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 260px !important;
+                min-width: 260px !important;
+                height: 100dvh !important;
+                flex-shrink: 0;
+                box-shadow: none !important;
+                border-right: 1px solid var(--ui-subtle) !important;
+                z-index: 10 !important;
+                transition: none !important;
+                background: var(--bg-primary) !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            /* Hide the X close button — sidebar is always open on desktop */
+            .sidebar-header {
+                padding: 18px 16px 14px !important;
+                border-bottom: 1px solid var(--ui-subtle) !important;
+            }
+            .sidebar-close { display: none !important; }
+
+            /* Add a branded logo/title to sidebar header */
+            .sidebar-header::before {
+                content: 'Jarvis';
+                display: block;
+                font-size: 18px;
+                font-weight: 800;
+                color: var(--text-primary);
+                letter-spacing: -0.02em;
+                flex: 1;
+            }
+
+            /* Hide the blur backdrop on desktop — sidebar is permanent */
+            .backdrop-blur { display: none !important; }
+
+            /* ── Chat container: fills remaining space ── */
+            .chat-container {
+                max-width: none !important;
+                width: 0 !important;           /* flex will expand it */
+                flex: 1 !important;
+                height: 100dvh !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: var(--bg-primary) !important;
+                padding: 0 !important;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+
+            /* ── Header: fixed to the chat column, not full viewport ── */
+            .chat-header {
+                position: absolute !important;
+                top: 0;
+                left: 0;
+                right: 0;
+                padding: 14px 20px !important;
+                background: transparent !important;
+                border-bottom: none !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                z-index: 100 !important;
+            }
+
+            /* Hide the back-arrow button — replaced by sidebar nav */
+            .back-btn { display: none !important; }
+
+            /* Hide hamburger menu toggle — sidebar is always visible */
+            .menu-toggle { display: none !important; }
+
+            /* Hide the divider between hamburger & edit button */
+            .header-divider { display: none !important; }
+
+            /* Restyle the right pill to just the edit button */
+            .header-right {
+                background: rgba(255,255,255,0.72) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                border: 1px solid rgba(0,0,0,0.07) !important;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.1) !important;
+                border-radius: 999px !important;
+                height: 40px !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+            [data-theme="dark"] .header-right {
+                background: rgba(40,40,40,0.72) !important;
+                border-color: rgba(255,255,255,0.1) !important;
+                box-shadow: 0 2px 16px rgba(0,0,0,0.4) !important;
+            }
+
+            /* Add a chat title to the left of the header */
+            .chat-header::before {
+                content: 'New chat';
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                letter-spacing: -0.01em;
+                pointer-events: none;
+            }
+
+            /* ── Message stream ── */
+            .message-stream {
+                padding: 72px 0 230px !important;
+                max-width: 720px;
+                width: 100%;
+                margin: 0 auto;
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+
+            /* ── Input dock ── */
+            .dock-wrapper {
+                position: absolute !important;
+                bottom: 0;
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%);
+                padding: 16px 24px 24px !important;
+                max-width: 720px;
+                width: 100%;
+                background: linear-gradient(to top, var(--bg-primary) 80%, transparent) !important;
+            }
+
+            /* ── Tools tray: constrained to chat column on desktop ── */
+            .tools-tray {
+                left: 260px !important;
+            }
+
+            /* ── Keep dropdown positioned within the chat column ── */
+            .edit-dropdown {
+                right: 20px !important;
+            }
+
+            /* ── Sidebar drawer pages: better padding on desktop ── */
+            .drawer-page {
+                padding: 16px 14px !important;
+            }
+
+            /* ── Sidebar footer: always pinned to bottom ── */
+            .drawer-footer {
+                margin-top: auto;
+            }
+
+            /* ── Hover states on sidebar items: more refined ── */
+            .d-item:hover {
+                background: var(--ui-subtle) !important;
+            }
+
+            /* ── No body.menu-open effects needed on desktop ── */
+            body.menu-open .back-btn { display: none !important; }
+            body.menu-open .header-right {
+                opacity: 1 !important;
+                filter: none !important;
+                pointer-events: auto !important;
+            }
+
+            /* ── Notification overlay: account for sidebar ── */
+            #adminNotifOverlay {
+                left: 260px !important;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+<script id="msgData" type="application/json">{{ messages | tojson }}</script>
+
+<template id="logoSvg">
+    <svg viewBox="0 0 18 18" width="24" height="24" fill="currentColor">
+        <rect x="0" y="0" width="3" height="2"/><rect x="15" y="0" width="3" height="2"/>
+        <rect x="3" y="2" width="12" height="2"/>
+        <rect x="0" y="4" width="3" height="7"/><rect x="15" y="4" width="3" height="7"/>
+        <rect x="5" y="6" width="3" height="2"/><rect x="10" y="6" width="3" height="2"/>
+        <rect x="3" y="11" width="5" height="2"/><rect x="12" y="11" width="3" height="1"/>
+        <rect x="11" y="12" width="4" height="1"/>
+        <rect x="5" y="13" width="3" height="2"/><rect x="9" y="13" width="4" height="1"/>
+        <rect x="8" y="14" width="4" height="1"/><rect x="8" y="15" width="3" height="1"/>
+        <rect x="8" y="16" width="2" height="1"/>
+    </svg>
+</template>
+
+<!-- Backdrop blur overlay -->
+<div class="backdrop-blur" id="menuBackdrop"></div>
+
+<!-- ════════ SIDEBAR OVERLAY ════════ -->
+<div class="sidebar-overlay" id="sidebarMenu">
+    <!-- Fixed header -->
+    <div class="sidebar-header">
+        <button class="sidebar-close" onclick="closeMenu()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+
+    <div class="drawer-pages">
+        <!-- Main page -->
+        <div class="drawer-page" id="drawerMain">
+            <a href="/new_chat" class="d-item new-chat">
+                <svg class="d-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New chat
+            </a>
+            <button class="d-item" onclick="drawerGoTo('drawerProjects')">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Projects
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="d-item" onclick="drawerGoTo('drawerChats')">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Chats
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <hr class="d-divider">
+            <button class="d-item" onclick="drawerGoTo('drawerSettings')">
+                <svg class="d-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <hr class="d-divider">
+            <a href="/privacy" class="d-item">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Privacy &amp; Terms
+            </a>
+            <hr class="d-divider">
+            <div class="d-toggle-row" onclick="toggleDarkMode()">
+                <div class="d-toggle-left">
+                    <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    Dark mode
+                </div>
+                <button class="toggle-pill" id="darkToggle" onclick="event.stopPropagation();toggleDarkMode()"></button>
+            </div>
+        </div>
+
+        <!-- About sub-panel -->
+        <div class="drawer-page slide-in" id="drawerAbout">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-card">
+                <div class="d-card-icon" id="aboutCardLogo"></div>
+                <h3>Jarvis AI</h3>
+                <p class="ver">VERSION 1.0 · BETA</p>
+                <p>Jarvis is a personal AI assistant built to help with everyday tasks — questions, code, math, and more.</p>
+                <p>Powered by Groq LLaMA with a custom security layer built from scratch.</p>
+                <p class="tag">MIA CORE // <span>AADIN</span></p>
+            </div>
+        </div>
+
+        <!-- Developer sub-panel -->
+        <div class="drawer-page slide-in" id="drawerDev">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-card">
+                <div class="d-card-icon" style="background:#e0e7ff;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <h3>Aadin</h3>
+                <p class="ver">DEVELOPER · CREATOR</p>
+                <p>Jarvis was designed and built by Aadin, a self-taught developer passionate about AI and cybersecurity.</p>
+                <p>Built entirely on a mobile phone — backend, security layer, and UI — as part of a vision for AI-powered secure systems.</p>
+                <p class="tag">MIA CORE // <span>AADIN</span></p>
+            </div>
+        </div>
+
+        <!-- Projects sub-panel -->
+        <div class="drawer-page slide-in" id="drawerProjects">
+            <div class="d-chats-header">
+                <button class="d-back" onclick="drawerGoBack()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </button>
+                <a href="/landing#projects" class="d-clear-btn" style="text-decoration:none;display:flex;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Project
+                </a>
+            </div>
+            <div class="d-chat-list" id="projectListContainer">
+                <p class="d-empty">Loading projects...</p>
+            </div>
+        </div>
+
+        <!-- Chats sub-panel -->
+        <div class="drawer-page slide-in" id="drawerChats">
+            <div class="d-chats-header">
+                <button class="d-back" onclick="drawerGoBack()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </button>
+                <button class="d-clear-btn" id="clearAllBtn" onclick="clearAllChats()" style="display:none">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                    Clear all
+                </button>
+            </div>
+            <div class="d-chat-list" id="chatListContainer">
+                <p class="d-empty" id="chatListLoading">Loading chats...</p>
+            </div>
+        </div>
+
+        <!-- Settings main sub-panel -->
+        <div class="drawer-page slide-in" id="drawerSettings">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-settings-user-card">
+                <div class="d-settings-avatar" id="settingsAvatar"></div>
+                <div>
+                    <div class="d-settings-uname" id="settingsUsername">{{ username }}</div>
+                    <div class="d-settings-role">Jarvis User</div>
+                </div>
+            </div>
+            <button class="d-item" onclick="drawerGoTo('drawerSecurity')">
+                <svg class="d-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Security
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="d-item" onclick="drawerGoTo('drawerChatPrivacy')">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Chats &amp; Privacy
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <hr class="d-divider">
+            <button class="d-item danger" onclick="triggerLogout(this)">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Log out
+                <span class="logout-spinner" style="margin-left:auto;"></span>
+            </button>
+        </div>
+
+        <!-- Security sub-panel -->
+        <div class="drawer-page slide-in" id="drawerSecurity">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-section-label">SECURITY</div>
+            <button class="d-item" onclick="drawerGoTo('drawerChangePassword')">
+                <svg class="d-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Change Password
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="d-item" onclick="drawerGoTo('drawerChangeUsername')">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Change Username
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <hr class="d-divider">
+            <button class="d-item danger" onclick="drawerGoTo('drawerDeleteAccount')">
+                <svg class="d-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete Account
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:#ef4444;fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+
+        <!-- Change Password sub-panel -->
+        <div class="drawer-page slide-in" id="drawerChangePassword">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-section-label">CHANGE PASSWORD</div>
+            <div class="d-form-group">
+                <input class="d-input" type="password" id="cpCurrent" placeholder="Current password" autocomplete="current-password">
+                <input class="d-input" type="password" id="cpNew" placeholder="New password (min 4 chars)" autocomplete="new-password">
+                <div class="d-form-msg" id="cpMsg"></div>
+                <button class="d-action-btn" onclick="submitChangePassword()">Update Password</button>
+            </div>
+        </div>
+
+        <!-- Change Username sub-panel -->
+        <div class="drawer-page slide-in" id="drawerChangeUsername">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-section-label">CHANGE USERNAME</div>
+            <div class="d-form-group">
+                <input class="d-input" type="text" id="cuNew" placeholder="New username (min 3 chars)" autocomplete="username">
+                <input class="d-input" type="password" id="cuPassword" placeholder="Confirm your password" autocomplete="current-password">
+                <div class="d-form-msg" id="cuMsg"></div>
+                <button class="d-action-btn" onclick="submitChangeUsername()">Save Username</button>
+            </div>
+        </div>
+
+        <!-- Delete Account sub-panel -->
+        <div class="drawer-page slide-in" id="drawerDeleteAccount">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-section-label">DANGER ZONE</div>
+            <div class="d-danger-card">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>This will permanently delete your account and all your chat history. This action cannot be undone.</p>
+            </div>
+            <div class="d-form-group">
+                <input class="d-input" type="password" id="daPassword" placeholder="Confirm your password" autocomplete="current-password">
+                <div class="d-form-msg" id="daMsg"></div>
+                <button class="d-action-btn danger" onclick="submitDeleteAccount()">Delete My Account</button>
+            </div>
+        </div>
+
+        <!-- Chats & Privacy sub-panel -->
+        <div class="drawer-page slide-in" id="drawerChatPrivacy">
+            <button class="d-back" onclick="drawerGoBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </button>
+            <div class="d-section-label">CHATS &amp; PRIVACY</div>
+            <button class="d-item" onclick="drawerGoTo('drawerViewChats')">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                View Chat History
+                <svg style="margin-left:auto;width:14px;height:14px;stroke:var(--text-secondary);fill:none;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <a href="/privacy" class="d-item">
+                <svg class="d-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Privacy &amp; Terms
+            </a>
+            <hr class="d-divider">
+            <button class="d-item danger" onclick="clearAllChatsFromSettings()">
+                <svg class="d-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete All Chats
+            </button>
+        </div>
+
+        <!-- View Chat History sub-panel (inside settings) -->
+        <div class="drawer-page slide-in" id="drawerViewChats">
+            <div class="d-chats-header">
+                <button class="d-back" onclick="drawerGoBack()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </button>
+            </div>
+            <div class="d-chat-list" id="viewChatListContainer">
+                <p class="d-empty" id="viewChatListLoading">Loading chats...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════ MAIN CHAT ════════ -->
+<div class="chat-container">
+    {% if project_info %}
+    <div id="projectBanner" style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:8px;padding:8px 16px 8px 14px;background:var(--bg-primary);border-bottom:1px solid var(--border);font-family:'DM Sans',sans-serif;">
+      <div style="width:10px;height:10px;border-radius:50%;background:{{ project_info.color }};flex-shrink:0;"></div>
+      <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ project_info.name }}</span>
+      <a href="/landing" onclick="flushSession(); return true;" style="font-size:11px;color:var(--text-dim);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.5px;flex-shrink:0;">← All projects</a>
+    </div>
+    {% endif %}
+    <header class="chat-header" {% if project_info %}style="top:37px;"{% endif %}>
+        <!-- Back button — left -->
+        <a href="/landing" onclick="flushSession(); return true;" class="back-btn" aria-label="Back">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </a>
+
+        <!-- Right cluster — hamburger + edit pill -->
+        <div class="header-right">
+            <button class="menu-toggle" id="menuBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="header-divider"></div>
+            <button class="header-icon-btn" id="editBtn" aria-label="Options">
+                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+        </div>
+
+        <!-- Edit dropdown -->
+        <div class="edit-dropdown-backdrop" id="editBackdrop"></div>
+        <div class="edit-dropdown" id="editDropdown">
+            <div class="edit-dropdown-label">Options</div>
+            <button class="edit-dropdown-item" onclick="shareChat()">
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
+            </button>
+            <button class="edit-dropdown-item" onclick="pinChat()">
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Pin
+            </button>
+            <div class="edit-dropdown-sep"></div>
+            <button class="edit-dropdown-item" onclick="viewUploads()">
+                <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                Uploaded files
+            </button>
+            <button class="edit-dropdown-item" onclick="archiveChat()">
+                <svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                Archive
+            </button>
+            <div class="edit-dropdown-sep"></div>
+            <button class="edit-dropdown-item danger" onclick="deleteChat()">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete
+            </button>
+        </div>
+    </header>
+
+    <main class="message-stream" id="messageStream" {% if project_info %}style="padding-top:109px;"{% endif %}></main>
+
+    <!-- Tray backdrop — body-level so z-index works -->
+    <div class="tray-backdrop" id="trayBackdrop"></div>
+    <!-- Tools tray — body-level -->
+    <div class="tools-tray" id="toolsTray">
+            <!-- Top row: large icon buttons -->
+            <div class="tray-icon-row">
+                <button class="tray-icon-btn" id="trayPhotoBtn">
+                    <span class="tray-icon-box">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </span>
+                    <span class="tray-icon-label">Photos</span>
+                </button>
+                <button class="tray-icon-btn" id="trayCameraBtn">
+                    <span class="tray-icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </span>
+                    <span class="tray-icon-label">Camera</span>
+                </button>
+                <button class="tray-icon-btn" id="trayPdfBtn">
+                    <span class="tray-icon-box">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </span>
+                    <span class="tray-icon-label">Files</span>
+                </button>
+            </div>
+            <div class="tray-divider"></div>
+            <button class="tray-list-item" id="trayImgGenBtn">
+                <span class="tray-list-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </span>
+                <span class="tray-list-text">
+                    <span class="tray-list-title">Images</span>
+                    <span class="tray-list-sub">Upload An Image</span>
+                </span>
+            </button>
+            <button class="tray-list-item" id="trayGenBtn">
+                <span class="tray-list-icon">
+                    <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>
+                <span class="tray-list-text">
+                    <span class="tray-list-title">Generate</span>
+                    <span class="tray-list-sub">Create an image</span>
+                </span>
+            </button>
+    </div>
+
+    <div class="dock-wrapper">
+        <div class="img-preview-wrap" id="imgPreview">
+            <img class="img-preview-thumb" id="imgThumb" src="" alt="">
+            <span class="img-preview-name" id="imgName"></span>
+            <button class="img-preview-remove" id="imgRemove" title="Remove">✕</button>
+        </div>
+
+        <!-- Input dock -->
+        <div class="input-dock" id="inputDock">
+            <div class="input-row">
+                <button class="plus-btn" id="plusBtn" type="button" title="Quick actions">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <label class="attach-btn" for="imgInput" title="Attach a photo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                </label>
+                <input type="file" id="imgInput" accept="image/*" style="display:none">
+                <input type="file" id="imgInput2" accept="image/*" style="display:none">
+                <textarea id="chatInput" placeholder="" rows="1" autocomplete="off"></textarea>
+                <button class="submit-btn" id="submitBtn" type="button" title="Send">
+                    <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // ── Sound Engine (iOS-style noise burst taps) ──
+    const MiaSound = (() => {
+        let ctx = null;
+        function _ctx() {
+            if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+            return ctx;
+        }
+        function _play(fn) { try { fn(_ctx()); } catch(e) {} }
+
+        function _tap(freq, dur, gain) {
+            _play(ac => {
+                const len = Math.floor(ac.sampleRate * dur);
+                const buf = ac.createBuffer(1, len, ac.sampleRate);
+                const d   = buf.getChannelData(0);
+                for (let i = 0; i < len; i++)
+                    d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 8);
+                const src = ac.createBufferSource();
+                const bpf = ac.createBiquadFilter();
+                const g   = ac.createGain();
+                bpf.type = 'bandpass';
+                bpf.frequency.value = freq;
+                bpf.Q.value = 1.2;
+                src.buffer = buf;
+                src.connect(bpf); bpf.connect(g); g.connect(ac.destination);
+                g.gain.setValueAtTime(gain, ac.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+                src.start();
+            });
+        }
+
+        function send()  { _tap(3600, 0.035, 0.5); }
+        function reply() { _tap(2400, 0.045, 0.4); }
+        function image() { reply(); }
+        function error() {}
+
+        return { send, reply, image, error };
+    })();
+
+    const isNewReply = {{ 'true' if is_new_reply else 'false' }};
+    const _jarvusUsername = {{ username | tojson }};
+    let _chatKey = null;
+
+    // Fetch chat key from backend securely (avoids exposing it in HTML source)
+    async function loadChatKey() {
+        try {
+            const res = await fetch('/get_chat_key');
+            const data = await res.json();
+            if (!data.error) _chatKey = data.chat_key;
+        } catch(e) { console.warn('Could not fetch chat key', e); }
+    }
+    loadChatKey();
+{% raw %}
+    const messages = JSON.parse(document.getElementById('msgData').textContent);
+    marked.setOptions({ breaks: true, gfm: true });
+
+    // ── SVG logos ──
+    const logoTpl = document.getElementById('logoSvg').content;
+    ['headerLogo','aboutCardLogo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.appendChild(logoTpl.cloneNode(true));
+    });
+
+    // ── Settings avatar initial ──
+    (function() {
+        const av = document.getElementById('settingsAvatar');
+        if (av) {
+            av.textContent = _jarvusUsername ? _jarvusUsername[0].toUpperCase() : '?';
+        }
+    })();
+
+    // ── Copy buttons ──
+    function addCopyBtns(el) {
+        el.querySelectorAll('pre').forEach(pre => {
+            if (pre.querySelector('.copy-btn')) return;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn'; btn.textContent = 'Copy';
+            btn.onclick = () => {
+                navigator.clipboard.writeText(pre.querySelector('code')?.innerText || pre.innerText);
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            };
+            pre.appendChild(btn);
+        });
+    }
+
+    // ── Typewriter ──
+    function typewriter(el, html, container) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        if (tmp.querySelector('pre')) { el.innerHTML = html; addCopyBtns(el); return; }
+        const plainText = tmp.innerText;
+        if (plainText.length < 4) { el.innerHTML = html; addCopyBtns(el); return; }
+        const speed = plainText.length > 200 ? 6 : plainText.length > 80 ? 10 : 16;
+        let i = 0;
+        el.textContent = '';
+        function tick() {
+            if (i < plainText.length) {
+                i += 2; el.textContent = plainText.slice(0, i);
+                if (container) container.scrollTop = container.scrollHeight;
+                setTimeout(tick, speed);
+            } else {
+                el.innerHTML = html; addCopyBtns(el);
+                if (container) container.scrollTop = container.scrollHeight;
+            }
+        }
+        tick();
+    }
+
+    // ── Make bubble ──
+    function makeActionBar(textEl) {
+        const bar = document.createElement('div');
+        bar.className = 'msg-actions';
+        bar.innerHTML =
+            '<button class="msg-action-btn" data-action="copy" title="Copy">' +
+              '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+            '</button>' +
+            '<button class="msg-action-btn" data-action="like" title="Good response">' +
+              '<svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>' +
+            '</button>' +
+            '<button class="msg-action-btn" data-action="dislike" title="Bad response">' +
+              '<svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>' +
+            '</button>' +
+            '<button class="msg-action-btn" data-action="speak" title="Read aloud">' +
+              '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' +
+            '</button>' +
+            '<button class="msg-action-btn" data-action="share" title="Share">' +
+              '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>' +
+            '</button>';
+
+        bar.querySelectorAll('.msg-action-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.dataset.action;
+                this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop');
+
+                if (action === 'copy') {
+                    const plain = (textEl.innerText || textEl.textContent || '').trim();
+                    navigator.clipboard.writeText(plain).catch(() => {});
+                    const origHTML = this.innerHTML;
+                    this.classList.add('copied');
+                    this.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+                    setTimeout(() => { this.innerHTML = origHTML; this.classList.remove('copied'); }, 1800);
+
+                } else if (action === 'like') {
+                    const wasLiked = this.classList.contains('liked');
+                    bar.querySelector('[data-action="like"]').classList.remove('liked');
+                    bar.querySelector('[data-action="dislike"]').classList.remove('disliked');
+                    if (!wasLiked) this.classList.add('liked');
+
+                } else if (action === 'dislike') {
+                    const wasDisliked = this.classList.contains('disliked');
+                    bar.querySelector('[data-action="like"]').classList.remove('liked');
+                    bar.querySelector('[data-action="dislike"]').classList.remove('disliked');
+                    if (!wasDisliked) this.classList.add('disliked');
+
+                } else if (action === 'speak') {
+                    const speakBtn = this;
+                    if (window._activeTTS && window._activeTTS !== speakBtn) {
+                        window.speechSynthesis.cancel();
+                        window._activeTTS.classList.remove('speaking');
+                        window._activeTTS.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+                        window._activeTTS = null;
+                    }
+                    if (speakBtn.classList.contains('speaking')) {
+                        window.speechSynthesis.cancel();
+                        speakBtn.classList.remove('speaking');
+                        speakBtn.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+                        window._activeTTS = null;
+                    } else {
+                        const plain = (textEl.innerText || textEl.textContent || '').trim();
+                        if (!plain) return;
+                        window.speechSynthesis.cancel();
+                        const utt = new SpeechSynthesisUtterance(plain);
+                        utt.rate = 1.05; utt.pitch = 1;
+                        speakBtn.classList.add('speaking');
+                        speakBtn.innerHTML = '<svg viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+                        window._activeTTS = speakBtn;
+                        utt.onend = utt.onerror = () => {
+                            speakBtn.classList.remove('speaking');
+                            speakBtn.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+                            window._activeTTS = null;
+                        };
+                        window.speechSynthesis.speak(utt);
+                    }
+
+                } else if (action === 'share') {
+                    const plain = (textEl.innerText || textEl.textContent || '').trim();
+                    if (navigator.share) { navigator.share({ text: plain }).catch(() => {}); }
+                    else { navigator.clipboard.writeText(plain).catch(() => {}); }
+                }
+            });
+        });
+        return bar;
+    }
+
+    function makeBubble(msg, animate, container) {
+        const row = document.createElement('div');
+        row.className = 'message-row ' + (msg.sender === 'You' ? 'user' : 'ai');
+
+        const label = document.createElement('div');
+        label.className = 'meta-label';
+        label.textContent = msg.sender === 'You' ? 'You' : 'Jarvis';
+        row.appendChild(label);
+
+        const text = document.createElement('div');
+        text.className = 'message-text';
+
+        if (msg.sender === 'You') {
+            text.textContent = msg.text;
+        } else {
+            // Strip internal marker prefix before rendering
+            let rawText = msg.text;
+            if (rawText.startsWith('[IMAGE ANALYSIS RESULT]\n')) {
+                rawText = rawText.slice('[IMAGE ANALYSIS RESULT]\n'.length);
+            }
+            // Compact placeholder for YouTube video
+            if (rawText.startsWith('[YOUTUBE VIDEO:')) {
+                const ytTitle = rawText.replace('[YOUTUBE VIDEO:', '').replace(/\]$/, '').trim();
+                const safeQ = encodeURIComponent(ytTitle);
+                text.innerHTML = `<a href="https://www.youtube.com/results?search_query=${safeQ}" target="_blank" style="font-size:13px;color:#ef4444;font-weight:600;text-decoration:none;">▶ ${ytTitle} — tap to watch on YouTube</a>`;
+                row.appendChild(text);
+                row.appendChild(makeActionBar(text));
+                return row;
+            }
+            // Compact placeholder from session — reconstruct a live image div
+            if (rawText.startsWith('[IMAGE GENERATED:')) {
+                const imgPrompt = rawText.replace('[IMAGE GENERATED:', '').replace(/\]$/, '').trim();
+                const safePrompt = encodeURIComponent(imgPrompt);
+                const imgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=768&height=768&nologo=true&enhance=true`;
+                text.innerHTML = `<div class="jarvis-img-wrap"><img class="jarvis-img" src="${imgUrl}" alt="${imgPrompt}" /><div class="jarvis-img-footer"><span class="jarvis-img-caption">🎨 ${imgPrompt} ✨</span><button class="jarvis-img-dl" onclick="(function(u,n){var a=document.createElement('a');a.href=u;a.download=n+'.jpg';a.click();})(this.parentElement.previousSibling.src,'jarvis-img')">&#8203;</button></div></div>`;
+                text.querySelectorAll('.jarvis-img').forEach(img => {
+                    if (!img.classList.contains('loaded')) {
+                        const skel = document.createElement('div');
+                        skel.className = 'jarvis-img-skeleton';
+                        skel.innerHTML = '<div class="jarvis-img-spinner"></div><span class="jarvis-img-gen-label">Loading image...</span>';
+                        img.parentNode.insertBefore(skel, img);
+                        img.style.display = 'none';
+                        img.addEventListener('load', () => { skel.remove(); img.style.display = ''; img.classList.add('loaded'); });
+                        img.addEventListener('error', () => { skel.remove(); img.style.display = ''; });
+                    }
+                });
+                row.appendChild(text);
+                const imgBar = makeActionBar(text);
+                row.appendChild(imgBar);
+                return row;
+            }
+            // Compact placeholder for edited image
+            if (rawText.startsWith('[IMAGE EDITED:')) {
+                rawText = '✅ Image edited and displayed.';
+            }
+            if (rawText.includes('wsearch-wrap')) {
+                text.innerHTML = DOMPurify.sanitize(rawText, { ADD_ATTR: ['target'] });
+                row.appendChild(text);
+                row.appendChild(makeActionBar(text));
+                return row;
+            }
+            if (rawText.includes('##YT_SPLIT##')) {
+                const parts = rawText.split('##YT_SPLIT##');
+                const txtPart = parts[0].trim();
+                let ytPart  = parts[1].trim()
+                    .replace(/mia-yt-wrap/g, 'jarvis-yt-wrap')
+                    .replace(/mia-yt-player/g, 'jarvis-yt-player')
+                    .replace(/mia-yt-footer/g, 'jarvis-yt-footer')
+                    .replace(/mia-yt-title/g, 'jarvis-yt-title')
+                    .replace(/mia-yt-channel/g, 'jarvis-yt-channel')
+                    .replace(/mia-yt-fallback/g, 'jarvis-yt-fallback')
+                    .replace(/mia-yt-link/g, 'jarvis-yt-link');
+                let html = marked.parse(txtPart);
+                html = DOMPurify.sanitize(html);
+                const singleP = html.trim().match(/^<p>([\s\S]*?)<\/p>$/);
+                if (singleP && !html.trim().includes('</p><')) html = singleP[1];
+                text.innerHTML = html;
+                addCopyBtns(text);
+                const ytDiv = document.createElement('div');
+                ytDiv.innerHTML = DOMPurify.sanitize(ytPart, { ADD_TAGS: ['iframe'], ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'src', 'title'] });
+                ytDiv.style.marginTop = '10px';
+                row.appendChild(text);
+                row.appendChild(ytDiv);
+                row.appendChild(makeActionBar(text));
+                return row;
+            }
+            if (rawText.includes('jarvis-yt-wrap') || rawText.includes('mia-yt-wrap')) {
+                // Normalize legacy mia-yt-* to jarvis-yt-* so CSS applies
+                rawText = rawText
+                    .replace(/mia-yt-wrap/g, 'jarvis-yt-wrap')
+                    .replace(/mia-yt-player/g, 'jarvis-yt-player')
+                    .replace(/mia-yt-footer/g, 'jarvis-yt-footer')
+                    .replace(/mia-yt-title/g, 'jarvis-yt-title')
+                    .replace(/mia-yt-channel/g, 'jarvis-yt-channel')
+                    .replace(/mia-yt-fallback/g, 'jarvis-yt-fallback')
+                    .replace(/mia-yt-link/g, 'jarvis-yt-link');
+                text.innerHTML = DOMPurify.sanitize(rawText, { ADD_TAGS: ['iframe'], ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'src', 'title'] });
+                row.appendChild(text);
+                row.appendChild(makeActionBar(text));
+                return row;
+            }
+            if (rawText.includes('jarvis-img-wrap') || rawText.includes('mia-img-wrap')) {
+                // Normalize legacy mia-* prefix to jarvis-* so CSS applies
+                rawText = rawText
+                    .replace(/mia-img-wrap/g, 'jarvis-img-wrap')
+                    .replace(/mia-img-footer/g, 'jarvis-img-footer')
+                    .replace(/mia-img-caption/g, 'jarvis-img-caption')
+                    .replace(/mia-img-dl/g, 'jarvis-img-dl')
+                    .replace(/\bmia-img\b/g, 'jarvis-img');
+                text.innerHTML = DOMPurify.sanitize(rawText);
+                text.querySelectorAll('.jarvis-img-dl').forEach(btn => {
+                    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
+                });
+                text.querySelectorAll('.jarvis-img').forEach(img => {
+                    if (!img.classList.contains('loaded')) {
+                        const skel = document.createElement('div');
+                        skel.className = 'jarvis-img-skeleton';
+                        skel.innerHTML = '<div class="jarvis-img-spinner"></div><span class="jarvis-img-gen-label">Generating image...</span>';
+                        img.parentNode.insertBefore(skel, img);
+                        img.style.display = 'none';
+                        img.addEventListener('load', () => { skel.remove(); img.style.display = ''; img.classList.add('loaded'); });
+                        img.addEventListener('error', () => { skel.remove(); img.style.display = ''; });
+                    }
+                });
+                row.appendChild(text);
+                // action bar for image responses too
+                const imgBar = makeActionBar(text);
+                row.appendChild(imgBar);
+                return row;
+            }
+            let html = marked.parse(rawText);
+            html = DOMPurify.sanitize(html);
+            const stripped = html.trim();
+            const singleP = stripped.match(/^<p>([\s\S]*?)<\/p>$/);
+            if (singleP && !stripped.includes('</p><')) html = singleP[1];
+            if (animate) { typewriter(text, html, container); }
+            else         { text.innerHTML = html; addCopyBtns(text); }
+        }
+
+        row.appendChild(text);
+
+        // Add action bar for AI messages
+        if (msg.sender !== 'You') {
+            row.appendChild(makeActionBar(text));
+        }
+
+        return row;
+    }
+
+    function makeTyping() {
+        const div = document.createElement('div');
+        div.className = 'typing-bubble';
+        div.innerHTML =
+            '<div class="typing-dots-wrap">' +
+                '<span class="dot-main"></span>' +
+                '<div class="gpt-ring">' +
+                    '<span class="gpt-dot"></span>' +
+                    '<span class="gpt-dot"></span>' +
+                    '<span class="gpt-dot"></span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="typing-shimmer-wrap"></div>';
+        return div;
+    }
+
+    function startTypingPhase(el) {
+        el.classList.remove('phase-think');
+        el._thinkTimer = setTimeout(() => el.classList.add('phase-think'), 320);
+    }
+    function stopTypingPhase(el) {
+        clearTimeout(el._thinkTimer);
+        el.classList.remove('phase-think');
+    }
+
+    // ── Populate chat ──
+    const stream   = document.getElementById('messageStream');
+    const typingEl = makeTyping();
+
+    messages.forEach((msg, idx) => {
+        const animate = isNewReply && idx === messages.length - 1 && msg.sender !== 'You';
+        stream.appendChild(makeBubble(msg, animate, stream));
+    });
+    stream.appendChild(typingEl);
+    requestAnimationFrame(() => { stream.scrollTop = stream.scrollHeight; });
+
+    // ── AJAX send ──
+    const chatInput = document.getElementById('chatInput');
+    const inputDock = document.getElementById('inputDock');
+    const submitBtn = document.getElementById('submitBtn');
+
+    chatInput.addEventListener('input', function() {
+        this.style.height = '38px';
+        if (this.scrollHeight > 38) this.style.height = this.scrollHeight + 'px';
+        inputDock.classList.toggle('has-content', this.value.trim().length > 0);
+    });
+
+    function sendText() {
+        if (window._imgSendPending && window._imgSendPending()) { window._sendImageFn(); return; }
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+
+        // ── /create command: SiliconFlow image generation ──
+        if (msg.toLowerCase().startsWith('/create ')) {
+            const prompt = msg.slice(8).trim();
+            if (!prompt) return;
+            const bubble = makeBubble({ sender: 'You', text: msg }, false, stream);
+            bubble.classList.add('msg-enter');
+            stream.appendChild(bubble);
+            chatInput.value = ''; chatInput.style.height = '38px';
+            inputDock.classList.remove('has-content');
+            submitBtn.disabled = true;
+            const skelEl = document.createElement('div');
+            skelEl.className = 'msg-row bot-row msg-enter';
+            skelEl.innerHTML = '<div class="jarvis-img-skeleton" style="max-width:260px;border-radius:16px;"><div class="jarvis-img-spinner"></div><span class="jarvis-img-gen-label">✨ Generating image...</span></div>';
+            stream.appendChild(skelEl);
+            stream.scrollTop = stream.scrollHeight;
+            fetch('/sf_generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(r => r.json())
+            .then(data => {
+                skelEl.remove();
+                submitBtn.disabled = false;
+                const aiRow = document.createElement('div');
+                aiRow.className = 'message-row ai msg-enter';
+                const lbl = document.createElement('div'); lbl.className = 'meta-label'; lbl.textContent = 'Jarvis';
+                const txt = document.createElement('div'); txt.className = 'message-text';
+                if (data.image_url) {
+                    MiaSound.image();
+                    txt.innerHTML = '<div class="jarvis-img-wrap"><img class="jarvis-img" src="' + data.image_url + '" alt="' + prompt + '"><div class="jarvis-img-footer"><span class="jarvis-img-caption">' + prompt + '</span><button class="jarvis-img-dl" onclick="downloadImage(\'' + data.image_url + '\',\'jarvis-create\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download</button></div></div>';
+                    txt.querySelectorAll('.jarvis-img').forEach(img => {
+                        const skel = document.createElement('div');
+                        skel.className = 'jarvis-img-skeleton';
+                        skel.innerHTML = '<div class="jarvis-img-spinner"></div><span class="jarvis-img-gen-label">Generating image...</span>';
+                        img.parentNode.insertBefore(skel, img);
+                        img.style.display = 'none';
+                        img.addEventListener('load', () => { skel.remove(); img.style.display = ''; img.classList.add('loaded'); });
+                        img.addEventListener('error', () => { skel.remove(); img.style.display = ''; });
+                    });
+                } else {
+                    txt.textContent = '❌ Could not generate image: ' + (data.error || 'Unknown error');
+                }
+                aiRow.appendChild(lbl); aiRow.appendChild(txt);
+                stream.appendChild(aiRow);
+                stream.appendChild(typingEl);
+                stream.scrollTop = stream.scrollHeight;
+            })
+            .catch(() => {
+                skelEl.remove();
+                submitBtn.disabled = false;
+                const errBubble = makeBubble({ sender: 'Jarvis', text: '❌ Image generation failed. Try again.' }, false, stream);
+                stream.appendChild(errBubble);
+                stream.appendChild(typingEl);
+                stream.scrollTop = stream.scrollHeight;
+            });
+            return;
+        }
+
+        const bubble = makeBubble({ sender: 'You', text: msg }, false, stream);
+        bubble.classList.add('msg-enter');
+        stream.appendChild(bubble);
+        chatInput.value = ''; chatInput.style.height = '38px';
+        inputDock.classList.remove('has-content');
+        submitBtn.disabled = true;
+        MiaSound.send();
+
+        // Detect image generation request — show skeleton instead of typing dots
+        const _imgKeywords = ['generate', 'draw', 'create', 'make', 'show', 'paint', 'sketch', 'render', 'image', 'picture', 'photo', 'art', 'illustration', 'anime', 'portrait', 'wallpaper'];
+        const _msgLower = msg.toLowerCase();
+        const _isImgRequest = _imgKeywords.some(k => _msgLower.includes(k));
+
+        let imgSkeletonEl = null;
+        if (_isImgRequest) {
+            imgSkeletonEl = document.createElement('div');
+            imgSkeletonEl.className = 'msg-row bot-row msg-enter';
+            imgSkeletonEl.innerHTML =
+                '<div class="jarvis-img-skeleton" style="max-width:260px;border-radius:16px;">' +
+                '<div class="jarvis-img-spinner"></div>' +
+                '<span class="jarvis-img-gen-label">✨ Generating image...</span>' +
+                '</div>';
+            stream.appendChild(imgSkeletonEl);
+        } else {
+            stream.appendChild(typingEl);
+            typingEl.style.display = 'block'; startTypingPhase(typingEl);
+        }
+        stream.scrollTop = stream.scrollHeight;
+
+        fetch('/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (imgSkeletonEl) {
+                imgSkeletonEl.remove();
+                imgSkeletonEl = null;
+            } else {
+                typingEl.style.display = 'none'; stopTypingPhase(typingEl);
+            }
+            submitBtn.disabled = false;
+            if (data.reply) {
+                const replyBubble = makeBubble({ sender: 'Jarvis', text: data.reply }, true, stream);
+                replyBubble.classList.add('msg-enter');
+                stream.appendChild(replyBubble);
+                stream.appendChild(typingEl);
+                stream.scrollTop = stream.scrollHeight;
+                if (data.reply.includes('jarvis-img-wrap')) MiaSound.image();
+                else MiaSound.reply();
+            }
+        })
+        .catch(() => {
+            if (imgSkeletonEl) { imgSkeletonEl.remove(); imgSkeletonEl = null; }
+            else { typingEl.style.display = 'none'; stopTypingPhase(typingEl); }
+            submitBtn.disabled = false;
+            MiaSound.error();
+            const errBubble = makeBubble({ sender: 'Jarvis', text: 'Something went wrong. Try again.' }, false, stream);
+            stream.appendChild(errBubble);
+            stream.appendChild(typingEl);
+            stream.scrollTop = stream.scrollHeight;
+        });
+    }
+
+    submitBtn.addEventListener('click', sendText);
+    chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+    });
+
+    // ── Plus button / tools tray ──
+    const plusBtn    = document.getElementById('plusBtn');
+    const toolsTray  = document.getElementById('toolsTray');
+    const trayBd     = document.getElementById('trayBackdrop');
+
+    function openTray() {
+        toolsTray.classList.add('active');
+        trayBd.classList.add('active');
+        plusBtn.classList.add('rotated');
+        document.body.classList.add('tray-open');
+    }
+    function closeTray() {
+        toolsTray.classList.remove('active');
+        trayBd.classList.remove('active');
+        plusBtn.classList.remove('rotated');
+        document.body.classList.remove('tray-open');
+    }
+
+    plusBtn.addEventListener('click', () => toolsTray.classList.contains('active') ? closeTray() : openTray());
+    trayBd.addEventListener('click', closeTray);
+
+    // Tray cell actions
+    (function() {
+        // Photos — gallery
+        const trayPhoto = document.getElementById('trayPhotoBtn');
+        if (trayPhoto) trayPhoto.addEventListener('click', () => {
+            closeTray();
+            const inp = document.getElementById('imgInput');
+            if (inp) inp.click();
+        });
+
+        // Camera
+        const trayCam = document.getElementById('trayCameraBtn');
+        if (trayCam) {
+            const camInput = document.createElement('input');
+            camInput.type = 'file'; camInput.accept = 'image/*'; camInput.capture = 'environment';
+            camInput.style.display = 'none'; document.body.appendChild(camInput);
+            camInput.addEventListener('change', () => {
+                if (!camInput.files || !camInput.files[0]) return;
+                const file = camInput.files[0];
+                // Try DataTransfer first; fall back to directly wiring the preview
+                const inp = document.getElementById('imgInput');
+                let transferred = false;
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    inp.files = dt.files;
+                    if (inp.files && inp.files[0]) {
+                        inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        transferred = true;
+                    }
+                } catch(e) {}
+                if (!transferred) {
+                    // Fallback: manually trigger the preview using the file from camInput
+                    const imgThumb = document.getElementById('imgThumb');
+                    const imgName  = document.getElementById('imgName');
+                    const imgPreview = document.getElementById('imgPreview');
+                    if (imgThumb && imgName && imgPreview) {
+                        imgThumb.src = URL.createObjectURL(file);
+                        imgName.textContent = file.name;
+                        imgPreview.classList.add('show');
+                    }
+                    // Override the send function to use camInput file
+                    window._camFile = file;
+                    window._imgSendPending = function() { return !!(document.getElementById('imgInput').files[0] || window._camFile); };
+                    const origSend = window._sendImageFn;
+                    window._sendImageFn = function() {
+                        if (window._camFile && (!document.getElementById('imgInput').files[0])) {
+                            // Patch: re-attempt DataTransfer or use camFile via fetch directly
+                            const inp2 = document.getElementById('imgInput');
+                            try {
+                                const dt2 = new DataTransfer(); dt2.items.add(window._camFile);
+                                inp2.files = dt2.files;
+                            } catch(e) {}
+                            window._camFile = null;
+                        }
+                        origSend();
+                    };
+                }
+                camInput.value = '';
+            });
+            trayCam.addEventListener('click', () => { closeTray(); camInput.click(); });
+        }
+
+        // Files / PDF
+        const trayPdf = document.getElementById('trayPdfBtn');
+        if (trayPdf) trayPdf.addEventListener('click', () => { closeTray(); window.location.href = '/quiz'; });
+
+        // Images (list) — triggers gallery same as Photos
+        const trayImgGen = document.getElementById('trayImgGenBtn');
+        if (trayImgGen) trayImgGen.addEventListener('click', () => {
+            closeTray();
+            const inp = document.getElementById('imgInput');
+            if (inp) inp.click();
+        });
+
+        // Generate (list) — opens image generation prompt
+        const trayGen = document.getElementById('trayGenBtn');
+        if (trayGen) trayGen.addEventListener('click', () => { closeTray(); openImagePrompt(); });
+    })();
+
+    // ── Sidebar ──
+    const menuBtn     = document.getElementById('menuBtn');
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    const backdrop    = document.getElementById('menuBackdrop');
+
+    function openMenu() {
+        menuBtn.classList.add('open');
+        sidebarMenu.classList.add('active');
+        backdrop.classList.add('active');
+        document.body.classList.add('menu-open');
+        document.body.style.overflow = 'hidden';
+        drawerGoBack(true); // reset to main
+    }
+    function closeMenu() {
+        menuBtn.classList.remove('open');
+        sidebarMenu.classList.remove('active');
+        backdrop.classList.remove('active');
+        document.body.classList.remove('menu-open');
+        document.body.style.overflow = '';
+    }
+
+    menuBtn.addEventListener('click', () => sidebarMenu.classList.contains('active') ? closeMenu() : openMenu());
+    backdrop.addEventListener('click', closeMenu);
+
+    // Hamburger ripple
+    menuBtn.addEventListener('pointerdown', function(e) {
+        const r = document.createElement('span');
+        r.className = 'ham-ripple';
+        const size = Math.max(menuBtn.offsetWidth, menuBtn.offsetHeight);
+        r.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + (e.offsetX - size/2) + 'px;top:' + (e.offsetY - size/2) + 'px;';
+        menuBtn.appendChild(r);
+        r.addEventListener('animationend', () => r.remove());
+    });
+
+    // ── Edit dropdown ──
+    const editBtn      = document.getElementById('editBtn');
+    const editDropdown = document.getElementById('editDropdown');
+    const editBackdrop = document.getElementById('editBackdrop');
+
+    function openEdit()  { editDropdown.classList.add('open'); editBackdrop.classList.add('open'); }
+    function closeEdit() { editDropdown.classList.remove('open'); editBackdrop.classList.remove('open'); }
+
+    editBtn.addEventListener('click', e => { e.stopPropagation(); editDropdown.classList.contains('open') ? closeEdit() : openEdit(); });
+    editBackdrop.addEventListener('click', closeEdit);
+
+    function shareChat() {
+        closeEdit();
+        const btn = document.querySelector('.edit-dropdown-item[onclick="shareChat()"]');
+        if (btn) { btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none'; }
+        fetch('/share_chat', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+            if (!data.ok) { alert(data.error || 'Could not share chat.'); return; }
+            const url = data.url;
+            if (navigator.share) {
+                navigator.share({ title: 'Jarvis Chat', url });
+            } else {
+                navigator.clipboard.writeText(url).then(() => showShareToast()).catch(() => showShareToast());
+            }
+        })
+        .catch(() => {
+            if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+            alert('Network error. Please try again.');
+        });
+    }
+
+    function showShareToast() {
+        let toast = document.getElementById('shareToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'shareToast';
+            toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text-primary);color:var(--bg-primary);padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;gap:8px;white-space:nowrap;';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Link copied!';
+        requestAnimationFrame(() => { toast.style.opacity='1'; toast.style.transform='translateX(-50%) translateY(0)'; });
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(-50%) translateY(20px)'; }, 2800);
+    }
+    function pinChat() {
+        closeEdit();
+        fetch('/account/chat/' + _chatKey + '/pin', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) return;
+            const isPinned = data.pinned;
+            // Update pin button label
+            const pinBtn = document.querySelector('.edit-dropdown-item[onclick="pinChat()"]');
+            if (pinBtn) {
+                pinBtn.querySelector('svg').outerHTML = isPinned
+                    ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
+                    : '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+                pinBtn.childNodes[pinBtn.childNodes.length - 1].textContent = isPinned ? ' Unpin' : ' Pin';
+            }
+            // Refresh chat list so pinned moves to top
+            const c1 = document.getElementById('chatListContainer');
+            if (c1 && c1.children.length > 0) loadChats('chatListContainer', 'clearAllBtn');
+            // Show toast
+            let t = document.getElementById('pinToast');
+            if (!t) {
+                t = document.createElement('div'); t.id = 'pinToast';
+                t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text-primary);color:var(--bg-primary);padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;gap:8px;white-space:nowrap;';
+                document.body.appendChild(t);
+            }
+            t.innerHTML = isPinned
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Chat pinned!'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Chat unpinned';
+            requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+            setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, 2500);
+        })
+        .catch(() => {});
+    }
+    function viewUploads(){ closeEdit(); window.location.href = '/quiz'; }
+    function archiveChat(){ closeEdit(); alert('Chat archived! (coming soon)'); }
+    function deleteChat() {
+        closeEdit();
+        if (!confirm('Delete this chat and all its messages?')) return;
+        fetch('/account/chat/' + _chatKey + '/delete', { method: 'POST' })
+            .finally(() => { window.location.href = '/new_chat'; });
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Drawer sub-panels
+    let drawerHistory = [];
+    const allDrawerPanels = ['drawerAbout','drawerDev','drawerChats','drawerProjects','drawerSettings','drawerSecurity','drawerChangePassword','drawerChangeUsername','drawerDeleteAccount','drawerChatPrivacy','drawerViewChats'];
+
+    function drawerGoTo(pageId) {
+        const current = drawerHistory.length ? drawerHistory[drawerHistory.length-1] : 'drawerMain';
+        document.getElementById(current).classList.add('slide-out');
+        document.getElementById(current).classList.remove('slide-in');
+        const next = document.getElementById(pageId);
+        next.classList.remove('slide-in', 'slide-out');
+        drawerHistory.push(pageId);
+        // Load chats when navigating to chats panel
+        if (pageId === 'drawerChats') loadChats('chatListContainer', 'clearAllBtn');
+        if (pageId === 'drawerViewChats') loadChats('viewChatListContainer', null);
+        if (pageId === 'drawerProjects') loadProjects();
+    }
+    function drawerGoBack(reset) {
+        if (reset) {
+            allDrawerPanels.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.remove('slide-out'); el.classList.add('slide-in'); }
+            });
+            document.getElementById('drawerMain').classList.remove('slide-out','slide-in');
+            drawerHistory = [];
+            return;
+        }
+        if (!drawerHistory.length) return;
+        const current = drawerHistory.pop();
+        document.getElementById(current).classList.add('slide-in');
+        document.getElementById(current).classList.remove('slide-out');
+        const prev = drawerHistory.length ? drawerHistory[drawerHistory.length-1] : 'drawerMain';
+        document.getElementById(prev).classList.remove('slide-out','slide-in');
+    }
+
+    // ── Dynamic chat loading ──
+    function loadProjects() {
+        const container = document.getElementById('projectListContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="d-empty">Loading projects...</p>';
+
+        fetch('/projects')
+            .then(r => r.json())
+            .then(data => {
+                const projects = data.projects || [];
+                if (!projects.length) {
+                    container.innerHTML = '<p class="d-empty">No projects yet.<br><a href="/landing#projects" style="color:var(--accent);text-decoration:none;">Create your first project</a></p>';
+                    return;
+                }
+                container.innerHTML = '';
+                projects.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'd-chat-card';
+                    card.style.flexDirection = 'column';
+                    card.style.alignItems = 'stretch';
+                    card.style.gap = '0';
+                    card.style.padding = '0';
+                    const date = p.created_at ? p.created_at.slice(0, 10) : '';
+                    card.innerHTML = 
+                        '<div style="display:flex;align-items:center;padding:10px 12px;">' +
+                            '<a href="/project_chat/' + p.id + '" class="d-chat-link">' +
+                                '<span class="d-chat-link-title" style="color:' + (p.color || 'var(--accent)') + ';font-weight:700;">' + escHtml(p.name) + '</span>' +
+                                '<span class="d-chat-link-date">' + escHtml(date) + '</span>' +
+                            '</a>' +
+                            '<button class="d-chat-pin" onclick="toggleProjectChats(' + p.id + ', this)" style="margin-left:auto;">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"/></svg>' +
+                            '</button>' +
+                        '</div>' +
+                        '<div id="project-chats-' + p.id + '" style="display:none;padding:0 12px 10px 24px;flex-direction:column;gap:6px;"></div>';
+                    container.appendChild(card);
+                });
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="d-empty">Could not load projects.</p>';
+            });
+    }
+
+    function toggleProjectChats(projectId, btn) {
+        const list = document.getElementById('project-chats-' + projectId);
+        const chevron = btn.querySelector('.chevron');
+        if (list.style.display === 'none') {
+            list.style.display = 'flex';
+            list.innerHTML = '<p class="d-empty" style="font-size:11px;padding:4px 0;">Loading...</p>';
+            chevron.style.transform = 'rotate(180deg)';
+            fetch('/projects/' + projectId + '/chats')
+                .then(r => r.json())
+                .then(data => {
+                    const chats = data.chats || [];
+                    if (!chats.length) {
+                        list.innerHTML = '<p class="d-empty" style="font-size:11px;padding:4px 0;">No chats in this project.</p>';
+                        return;
+                    }
+                    list.innerHTML = '';
+                    chats.forEach(chat => {
+                        let preview = chat.preview || 'Project chat';
+                        preview = preview.replace(/<[^>]*>/g, '').trim();
+                        const chatEl = document.createElement('a');
+                        chatEl.href = '/project_chat/' + projectId + '/resume/' + chat.session_key;
+                        chatEl.className = 'd-chat-link';
+                        chatEl.style.padding = '6px 0';
+                        chatEl.style.borderBottom = '1px solid var(--ui-subtle)';
+                        chatEl.innerHTML = 
+                            '<span class="d-chat-link-title" style="font-size:12px;">' + escHtml(preview.slice(0, 40)) + (preview.length > 40 ? '…' : '') + '</span>' +
+                            '<span class="d-chat-link-date" style="font-size:9px;">' + escHtml(chat.updated_at.slice(0, 16)) + '</span>';
+                        list.appendChild(chatEl);
+                    });
+                })
+                .catch(() => {
+                    list.innerHTML = '<p class="d-empty" style="font-size:11px;padding:4px 0;">Error loading chats.</p>';
+                });
+        } else {
+            list.style.display = 'none';
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function loadChats(containerId, clearBtnId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<p class="d-empty">Loading chats...</p>';
+        if (clearBtnId) { const cb = document.getElementById(clearBtnId); if (cb) cb.style.display = 'none'; }
+
+        fetch('/account/chats')
+            .then(r => r.json())
+            .then(data => {
+                const chats = data.chats || [];
+                if (!chats.length) {
+                    container.innerHTML = '<p class="d-empty">No saved chats yet.<br>Start chatting to save one!</p>';
+                    return;
+                }
+                if (clearBtnId) { const cb = document.getElementById(clearBtnId); if (cb) cb.style.display = 'flex'; }
+                container.innerHTML = '';
+                chats.forEach(chat => {
+                    const card = document.createElement('div');
+                    card.className = 'd-chat-card' + (chat.is_pinned ? ' pinned' : '');
+                    let preview = chat.preview || '';
+                    preview = preview.replace(/<[^>]*>/g, '').trim();
+                    if (!preview || preview.startsWith('Good ') || preview.startsWith('Hey ')) {
+                        preview = 'Chat session';
+                    }
+                    const date = chat.updated_at ? chat.updated_at.slice(0, 16) : '';
+                    const isActive = chat.session_key === currentSessionKey;
+                    const titleClass = 'd-chat-link-title' + (isActive ? ' active' : '');
+                    const pinIcon = chat.is_pinned
+                        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="flex-shrink:0;color:#f59e0b"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
+                        : '';
+                    card.innerHTML =
+                        '<a href="/account/chat/' + chat.session_key + '" class="d-chat-link">' +
+                        '<span class="' + titleClass + '" style="display:flex;align-items:center;gap:5px;">' + pinIcon + escHtml(preview.slice(0, 50)) + (preview.length > 50 ? '…' : '') + '</span>' +
+                        '<span class="d-chat-link-date">' + escHtml(date) + '</span>' +
+                        '</a>' +
+                        '<button class="d-chat-pin" title="' + (chat.is_pinned ? 'Unpin' : 'Pin') + '" onclick="togglePinFromList(\'' + chat.session_key + '\',this)" style="margin-right:2px">' +
+                        (chat.is_pinned
+                            ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
+                            : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>') +
+                        '</button>' +
+                        '<button class="d-chat-del" title="Delete chat" onclick="deleteSingleChat(\'' + chat.session_key + '\',this)">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
+                        '</button>';
+                    container.appendChild(card);
+                });
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="d-empty">Could not load chats.</p>';
+            });
+    }
+
+    // Get current session key
+    const currentSessionKey = _chatKey;
+
+
+
+    function deleteSingleChat(sessionKey, btn) {
+        if (!confirm('Delete this chat?')) return;
+        btn.disabled = true;
+        fetch('/account/chat/' + sessionKey + '/delete', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    btn.closest('.d-chat-card').remove();
+                    const c1 = document.getElementById('chatListContainer');
+                    if (c1 && c1.children.length === 0) c1.innerHTML = '<p class="d-empty">No saved chats yet.<br>Start chatting to save one!</p>';
+                } else { btn.disabled = false; }
+            })
+            .catch(() => { btn.disabled = false; });
+    }
+
+    function togglePinFromList(sessionKey, btn) {
+        fetch('/account/chat/' + sessionKey + '/pin', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) return;
+            // Reload so order updates (pinned goes to top)
+            loadChats('chatListContainer', 'clearAllBtn');
+        })
+        .catch(() => {});
+    }
+
+    // ── Settings: Change Password ──
+    function submitChangePassword() {
+        const curr = document.getElementById('cpCurrent').value;
+        const nw   = document.getElementById('cpNew').value.trim();
+        const msg  = document.getElementById('cpMsg');
+        if (!curr || !nw) { setMsg(msg, 'Please fill in both fields.', 'err'); return; }
+        if (nw.length < 4) { setMsg(msg, 'New password must be at least 4 characters.', 'err'); return; }
+        setMsg(msg, 'Updating...', '');
+        fetch('/account/change_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: curr, new_password: nw })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                setMsg(msg, '✓ Password updated!', 'ok');
+                document.getElementById('cpCurrent').value = '';
+                document.getElementById('cpNew').value = '';
+            } else { setMsg(msg, data.error || 'Failed.', 'err'); }
+        })
+        .catch(() => setMsg(msg, 'Network error.', 'err'));
+    }
+
+    // ── Settings: Change Username ──
+    function submitChangeUsername() {
+        const nw   = document.getElementById('cuNew').value.trim();
+        const pw   = document.getElementById('cuPassword').value;
+        const msg  = document.getElementById('cuMsg');
+        if (!nw || !pw) { setMsg(msg, 'Please fill in both fields.', 'err'); return; }
+        if (nw.length < 3) { setMsg(msg, 'Username must be at least 3 characters.', 'err'); return; }
+        setMsg(msg, 'Saving...', '');
+        fetch('/account/change_username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_username: nw, password: pw })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                setMsg(msg, '✓ Username updated!', 'ok');
+                // Update displayed username
+                const unEl = document.getElementById('settingsUsername');
+                if (unEl) unEl.textContent = data.new_username || nw;
+                const avEl = document.getElementById('settingsAvatar');
+                if (avEl) avEl.textContent = (data.new_username || nw)[0].toUpperCase();
+                document.getElementById('cuNew').value = '';
+                document.getElementById('cuPassword').value = '';
+            } else { setMsg(msg, data.error || 'Failed.', 'err'); }
+        })
+        .catch(() => setMsg(msg, 'Network error.', 'err'));
+    }
+
+    // ── Settings: Delete Account ──
+    function submitDeleteAccount() {
+        const pw  = document.getElementById('daPassword').value;
+        const msg = document.getElementById('daMsg');
+        if (!pw) { setMsg(msg, 'Please enter your password.', 'err'); return; }
+        if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+        setMsg(msg, 'Deleting account...', '');
+        fetch('/account/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) { window.location.href = '/'; }
+            else { setMsg(msg, data.error || 'Failed.', 'err'); }
+        })
+        .catch(() => setMsg(msg, 'Network error.', 'err'));
+    }
+
+    // ── Clear all chats from Settings panel ──
+    function clearAllChatsFromSettings() {
+        if (!confirm('Delete all your chats? This cannot be undone.')) return;
+        fetch('/account/chats/delete_all', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    // Refresh both chat list views
+                    const c1 = document.getElementById('chatListContainer');
+                    const c2 = document.getElementById('viewChatListContainer');
+                    if (c1) c1.innerHTML = '<p class="d-empty">No saved chats yet.<br>Start chatting to save one!</p>';
+                    if (c2) c2.innerHTML = '<p class="d-empty">No saved chats yet.<br>Start chatting to save one!</p>';
+                    const cb = document.getElementById('clearAllBtn');
+                    if (cb) cb.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    function setMsg(el, text, type) {
+        el.textContent = text;
+        el.className = 'd-form-msg' + (type ? ' ' + type : '');
+    }
+
+    // ── Dark mode ──
+    function toggleDarkMode() {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('darkToggle').classList.toggle('on', !isDark);
+        localStorage.setItem('jarvis-dark', isDark ? '' : '1');
+    }
+    if (localStorage.getItem('jarvis-dark')) {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('darkToggle').classList.add('on');
+    }
+
+    // ── Animated placeholder ──
+    const phrases = ['Ask Jarvis anything...', 'Type a message...', 'How can I help?', 'Say hi...'];
+    let pi=0, ci=0, del=false, spd=100;
+    function typeLoop() {
+        const cur = phrases[pi];
+        chatInput.placeholder = del ? cur.slice(0, ci-1) : cur.slice(0, ci+1);
+        ci += del ? -1 : 1; spd = del ? 50 : 100;
+        if (!del && ci === cur.length) { del=true; spd=2000; }
+        else if (del && ci === 0)      { del=false; pi=(pi+1)%phrases.length; spd=400; }
+        setTimeout(typeLoop, spd);
+    }
+    typeLoop();
+
+    // ── Quick actions ──
+    function openImagePrompt() {
+        chatInput.value = 'Generate an image of ';
+        chatInput.dispatchEvent(new Event('input'));
+        chatInput.focus();
+        chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+        toolsTray.classList.remove('active');
+        trayBd.classList.remove('active');
+        document.body.classList.remove('tray-open');
+        plusBtn.classList.remove('rotated');
+    }
+
+    // ── Image download ──
+    function downloadImage(url, prompt) {
+        fetch(url).then(r => r.blob()).then(blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (prompt || 'jarvis-image') + '.jpg';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+        }).catch(() => window.open(url, '_blank'));
+    }
+
+    // ── Clear all chats ──
+    function clearAllChats() {
+        if (!confirm('Delete all your chats? This cannot be undone.')) return;
+        fetch('/account/chats/delete_all', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const container = document.getElementById('chatListContainer');
+                    if (container) container.innerHTML = '<p class="d-empty">No saved chats yet.<br>Start chatting to save one!</p>';
+                    const cb = document.getElementById('clearAllBtn');
+                    if (cb) cb.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    // ── Save session on tab close ──
+    function flushSession() {
+        const blob = new Blob(['{}'], { type: 'application/json' });
+        navigator.sendBeacon('/flush_session', blob);
+    }
+    window.addEventListener('beforeunload', flushSession);
+    window.addEventListener('pagehide', flushSession);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushSession();
+    });
+    // Auto-save every 30 seconds
+    setInterval(() => {
+        fetch('/flush_session', { method: 'POST' }).catch(() => {});
+    }, 30000);
+
+    // ── Logout ──
+    function triggerLogout(el) {
+        el.classList.add('loading');
+        const timeout = setTimeout(() => { window.location.href = '/'; }, 600);
+        fetch('/logout_now', { method: 'POST' })
+            .then(() => { clearTimeout(timeout); window.location.href = '/'; })
+            .catch(() => { clearTimeout(timeout); window.location.href = '/'; });
+        return false;
+    }
+
+    // ── Image upload ──
+    (function() {
+        const imgInput   = document.getElementById('imgInput');
+        const imgInput2  = document.getElementById('imgInput2');
+        const imgPreview = document.getElementById('imgPreview');
+        const imgThumb   = document.getElementById('imgThumb');
+        const imgName    = document.getElementById('imgName');
+        const imgRemove  = document.getElementById('imgRemove');
+
+        function setPreview(file) {
+            if (imgThumb._objUrl) URL.revokeObjectURL(imgThumb._objUrl);
+            imgThumb._objUrl = URL.createObjectURL(file);
+            imgThumb.src = imgThumb._objUrl;
+            imgName.textContent = file.name;
+            imgPreview.classList.add('show');
+        }
+        function clearPreview() {
+            imgPreview.classList.remove('show');
+            if (imgThumb._objUrl) { URL.revokeObjectURL(imgThumb._objUrl); imgThumb._objUrl = null; }
+            imgThumb.src = ''; imgName.textContent = '';
+            imgInput.value = '';
+        }
+
+        imgInput.addEventListener('change', () => { if (imgInput.files[0]) setPreview(imgInput.files[0]); });
+        imgRemove.addEventListener('click', clearPreview);
+
+        async function sendImage() {
+            const file = imgInput.files[0]; if (!file) return;
+            const file2  = imgInput2.files[0] || null;
+            const caption = chatInput.value.trim();
+
+            // Convert thumb to data URL so it survives page reload (blob URLs expire)
+            const toDataUrl = (f) => new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result);
+                r.readAsDataURL(f);
+            });
+            const thumbSrc = await toDataUrl(file);
+
+            const imgBubble = document.createElement('div');
+            imgBubble.className = 'message-row user msg-enter';
+            const labelEl = document.createElement('div');
+            labelEl.className = 'meta-label'; labelEl.textContent = 'You';
+            const textEl = document.createElement('div');
+            textEl.className = 'message-text';
+            let imgHTML = '<img src="' + thumbSrc + '" style="max-width:160px;border-radius:10px;display:block;' + (caption ? 'margin-bottom:6px' : '') + '">';
+            if (file2) imgHTML += '<img src="' + URL.createObjectURL(file2) + '" style="max-width:160px;border-radius:10px;display:block;' + (caption ? 'margin-bottom:6px' : '') + '">';
+            if (caption) imgHTML += '<span style="display:block;">' + caption + '</span>';
+            textEl.innerHTML = imgHTML;
+            imgBubble.appendChild(labelEl);
+            imgBubble.appendChild(textEl);
+            stream.appendChild(imgBubble);
+
+            chatInput.value = ''; chatInput.style.height = '38px';
+            inputDock.classList.remove('has-content');
+            clearPreview(); if (imgInput2) imgInput2.value = '';
+            submitBtn.disabled = true;
+            stream.appendChild(typingEl); typingEl.style.display = 'block'; startTypingPhase(typingEl);
+            stream.scrollTop = stream.scrollHeight;
+
+            const compressImg = (f) => new Promise(resolve => {
+                const canvas = document.createElement('canvas');
+                const img = new Image();
+                img.onload = () => {
+                    const MAX = 1200; let w = img.width, h = img.height;
+                    if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                    if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob(resolve, 'image/jpeg', 0.82);
+                };
+                img.src = URL.createObjectURL(f);
+            });
+
+            const fd = new FormData();
+            fd.append('image', await compressImg(file), 'image.jpg');
+            if (file2) fd.append('image2', await compressImg(file2), 'image2.jpg');
+            if (caption) fd.append('caption', caption);
+
+            fetch('/send_image', { method: 'POST', body: fd })
+                .then(r => r.text())
+                .then(text => {
+                    typingEl.style.display = 'none'; stopTypingPhase(typingEl); submitBtn.disabled = false;
+                    let data;
+                    try { data = JSON.parse(text); } catch(e) {
+                        stream.appendChild(makeBubble({ sender:'Jarvis', text:'Could not process the image. Try again! 😅' }, false, stream));
+                        stream.scrollTop = stream.scrollHeight; return;
+                    }
+                    const raw = data.reply || data.error || 'No response received';
+                    if (raw.startsWith('__EDITED_IMAGE__')) {
+                        const imgSrc = raw.replace('__EDITED_IMAGE__', '');
+                        const editRow = document.createElement('div');
+                        editRow.className = 'message-row ai msg-enter';
+                        const lbl = document.createElement('div'); lbl.className = 'meta-label'; lbl.textContent = 'Jarvis';
+                        const txt = document.createElement('div'); txt.className = 'message-text';
+                        txt.innerHTML = '<p style="font-size:12px;opacity:0.6;margin-bottom:6px;">✨ Edited image</p><img src="' + imgSrc + '" style="max-width:240px;border-radius:10px;display:block;margin-bottom:6px;"><a href="' + imgSrc + '" download="jarvis-edit.png" style="font-size:12px;opacity:0.7;">⬇ Download</a>';
+                        editRow.appendChild(lbl); editRow.appendChild(txt);
+                        stream.appendChild(editRow);
+                    } else {
+                        const bubble = makeBubble({ sender:'Jarvis', text:raw }, true, stream);
+                        bubble.classList.add('msg-enter');
+                        stream.appendChild(bubble);
+                    }
+                    stream.appendChild(typingEl);
+                    stream.scrollTop = stream.scrollHeight;
+                })
+                .catch(() => {
+                    typingEl.style.display = 'none'; stopTypingPhase(typingEl); submitBtn.disabled = false;
+                    stream.appendChild(makeBubble({ sender:'Jarvis', text:'Could not process the image. Try again! 😅' }, false, stream));
+                    stream.scrollTop = stream.scrollHeight;
+                });
+        }
+
+        // Flag so sendText and Enter handler can defer to sendImage
+        window._imgSendPending = function() { return !!imgInput.files[0]; };
+        window._sendImageFn = sendImage;
+    })();
+
+    // ── Admin notification polling ──
+    (function() {
+        const overlay = document.createElement('div');
+        overlay.id = 'adminNotifOverlay';
+        document.body.appendChild(overlay);
+
+        function dismissNotif(wrap) {
+            wrap.style.animation = 'notifPopOut .32s cubic-bezier(.4,0,.2,1) forwards';
+            setTimeout(() => wrap.remove(), 320);
+        }
+        function showNotif(title, body) {
+            overlay.innerHTML = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'admin-notif-wrap';
+            const inner = document.createElement('div');
+            inner.className = 'admin-notif-inner';
+            inner.innerHTML = '<div class="notif-label"><span class="notif-label-dot"></span>Jarvis Admin</div>'
+                + '<button class="notif-close" aria-label="Dismiss">\u00d7</button>'
+                + '<div class="notif-title">' + title + '</div>'
+                + '<div class="notif-body">' + body + '</div>'
+                + '<div class="notif-progress"><div class="notif-progress-bar"></div></div>';
+            wrap.appendChild(inner);
+            wrap.querySelector('.notif-close').addEventListener('click', () => dismissNotif(wrap));
+            overlay.appendChild(wrap);
+            setTimeout(() => { if (wrap.isConnected) dismissNotif(wrap); }, 10000);
+        }
+        function pollNotifications() {
+            fetch('/poll_notifications')
+                .then(r => r.json())
+                .then(data => { (data.notifications || []).forEach(n => showNotif(n.title, n.body)); })
+                .catch(() => {});
+        }
+        pollNotifications();
+        setInterval(pollNotifications, 15000);
+    })();
+
+{% endraw %}
+</script>
+</body>
+</html>
