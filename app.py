@@ -95,7 +95,7 @@ TOPIC_KEYWORDS = {
     "writing":  ["write","essay","story","poem","email","letter","summarise","summarize","draft","paragraph","blog"],
     "general":  ["explain","what","how","why","who","when","where","tell me","define","meaning"],
     "creative": ["idea","brainstorm","creative","imagine","concept","suggest","help me think"],
-    "tech":     ["ai","machine learning","neural","model","gpt","chatgpt","mia","llm","data","server","cloud"],
+    "tech":     ["ai","machine learning","neural","model","gpt","chatgpt","jarvis","llm","data","server","cloud"],
     "personal": ["i feel","i am","my life","im sad","im happy","struggling","advice","help me"],
 }
 
