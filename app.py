@@ -929,26 +929,75 @@ def wikipedia_search(query):
         print(f"[WIKI SEARCH] exception: {e}")
         return None
 
-def _do_google_search(query, user_msg=None):
-    """Wikipedia search wrapper. Never hallucinates — returns None if no results."""
-    results = wikipedia_search(query)
-    if not results:
+def google_search(query):
+    """Google Custom Search API integration."""
+    api_key = os.environ.get("GOOGLE_API_KEY", "")
+    cse_id  = os.environ.get("GOOGLE_CSE_ID", "")
+    if not api_key or not cse_id:
         return None
-    sources_html = (
-        '<div class="wsearch-wrap">'
-        '<div class="wsearch-header">📖 Wikipedia Results</div>'
-        '<div class="wsearch-results">' +
-        "".join([
+    try:
+        resp = requests.get(
+            "https://www.googleapis.com/customsearch/v1",
+            params={"key": api_key, "cx": cse_id, "q": query, "num": 5},
+            timeout=10
+        )
+        data = resp.json()
+        items = data.get("items", [])
+        if not items:
+            return None
+        results = []
+        for item in items:
+            results.append({
+                "title": item.get("title", ""),
+                "snippet": item.get("snippet", ""),
+                "url": item.get("link", "")
+            })
+        return results
+    except Exception as e:
+        print(f"[GOOGLE SEARCH] exception: {e}")
+        return None
+
+def _do_google_search(query, user_msg=None):
+    """Combined Wikipedia and Google Search. Never hallucinates — returns None if no results."""
+    wiki_results = wikipedia_search(query) or []
+    google_results = google_search(query) or []
+    
+    if not wiki_results and not google_results:
+        return None
+
+    # Build HTML for display
+    sources_html = '<div class="wsearch-wrap">'
+    
+    if wiki_results:
+        sources_html += '<div class="wsearch-header">📖 Wikipedia Results</div>'
+        sources_html += '<div class="wsearch-results">' + "".join([
             f'<a class="wsearch-result" href="{r["url"]}" target="_blank">'
             f'<span class="wsearch-title">{r["title"]}</span>'
             f'<span class="wsearch-snippet">{r["snippet"]}</span>'
             f'<span class="wsearch-url">{r["url"]}</span>'
-            f'</a>'
-            for r in results
-        ]) +
-        '</div></div>'
-    )
-    context = "\n".join([f"- {r['title']}: {r['snippet']}" for r in results])
+            f'</a>' for r in wiki_results
+        ]) + '</div>'
+
+    if google_results:
+        sources_html += '<div class="wsearch-header">🔍 Web Results</div>'
+        sources_html += '<div class="wsearch-results">' + "".join([
+            f'<a class="wsearch-result" href="{r["url"]}" target="_blank">'
+            f'<span class="wsearch-title">{r["title"]}</span>'
+            f'<span class="wsearch-snippet">{r["snippet"]}</span>'
+            f'<span class="wsearch-url">{r["url"]}</span>'
+            f'</a>' for r in google_results
+        ]) + '</div>'
+    
+    sources_html += '</div>'
+
+    # Build context for AI summary
+    context_lines = []
+    for r in wiki_results:
+        context_lines.append(f"[WIKI] {r['title']}: {r['snippet']}")
+    for r in google_results:
+        context_lines.append(f"[WEB] {r['title']}: {r['snippet']}")
+    context = "\n".join(context_lines)
+
     groq_key = os.environ.get("GROQ_API_KEY", "")
     summary = ""
     if groq_key and user_msg:
@@ -959,16 +1008,17 @@ def _do_google_search(query, user_msg=None):
                 json={
                     "model": "llama-3.1-8b-instant",
                     "messages": [
-                        {"role": "system", "content": "Answer using ONLY the Wikipedia results below. Be concise (2-3 sentences). Don't say 'based on search results' or 'according to'."},
-                        {"role": "user", "content": f"Question: {user_msg}\n\nWikipedia results:\n{context}"}
+                        {"role": "system", "content": "Answer the user's question using the search results provided. Be concise, warm, and conversational. Don't mention 'search results' or 'Wikipedia' explicitly in the text unless natural. Focus on the facts."},
+                        {"role": "user", "content": f"Question: {user_msg}\n\nSearch Results:\n{context}"}
                     ],
-                    "max_tokens": 200
+                    "max_tokens": 300
                 },
                 timeout=15
             )
             summary = sum_resp.json()["choices"][0]["message"]["content"].strip()
         except Exception:
             pass
+            
     if summary:
         return f"{summary}\n\n{sources_html}"
     return sources_html
@@ -1187,7 +1237,7 @@ def ask_jarvis_brain(prompt, history=None):
         "NEVER return action=text for these — always action=youtube_search. "
         "reply=3-7 word search query. image_prompt=''. "
         "If user ALSO wants text (e.g. recipe AND video), set youtube_plus_text to the text response.\n"
-        "web_search -> user asks about current events, latest news, recent updates, live scores, prices, weather, or anything that needs real-time info. reply=concise search query. image_prompt=''\n"
+        "web_search -> user asks about current events, latest news, recent updates, live scores, prices, weather, people, or anything that needs real-time info. ALWAYS use this if you don't know the answer for certain or if it involves current facts. reply=concise search query. image_prompt=''\n"
         "generate_image -> user EXPLICITLY requests an image/drawing/picture. reply=''. image_prompt=full descriptive prompt.\n"
         "edit_image -> last chat was a generated image AND user wants to change it. image_prompt=full new prompt.\n"
         "text -> everything else. reply=your response.\n\n"
@@ -1408,8 +1458,8 @@ def _build_reply(user_msg):
         return "📄 Upload a PDF on the <a href='/quiz' style='text-decoration:underline'>Quiz page</a> and I'll generate questions for you! 🎓"
 
     if action == "web_search":
-        query = decision["reply"].strip() or user_msg
-        result = _do_google_search(query, user_msg=user_msg)
+        search_query = decision["reply"].strip() or user_msg
+        result = _do_google_search(search_query, user_msg=user_msg)
         if result:
             return result
         return "I couldn't find any current information on that. Try asking differently or use /search <query> to search directly."
